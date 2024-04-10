@@ -20,9 +20,11 @@ public class SmallLexer {
 		System.out.println(content);
 		Identifier identifier = new Identifier();
 		LexemeChecker checker = new LexemeChecker();
-		StringInputPasser test = checker.check_lexeme("program\n", identifier);
-		System.out.println(test);
-
-
+		StringInputPasser test = new StringInputPasser(content);
+		while(!test.getNonConsumed().isEmpty()) {
+			test = checker.check_lexeme(test.getNonConsumed(), identifier);
+			System.out.println(test);
+			System.out.print('\n');
+		}
 	}
 }

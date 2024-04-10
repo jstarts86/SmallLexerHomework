@@ -39,7 +39,6 @@ public class LexemeChecker {
 			int new_state = 0;
 			char ch = current_string.charAt(i);
 			if(TokenDelimeter.tokenDelimeterList.contains(ch)) {
-				System.out.println("finel");
 				result.setDelimeter(ch);
 				result.setConsumed(consumed_string);
 				result.setAccepting(isAccepted);
@@ -47,19 +46,15 @@ public class LexemeChecker {
 				result.setError(isErrorState);
 				return result;
 			}
-			// while the current state is in an accepting state and not an error state
-			while((current_transition_table[state][accepting_index] != Lexeme.ACCEPTING_STATE)) {
-				if(isErrorState == true) {
-					consumed_string += ch;
-					break;
-				}
-				//check which state the character should go too
-				for(Map.Entry<Integer, ArrayList<Character>> entry : current_hashmap.entrySet()) {
+
+			//check which state the character should go too
+			if(!isErrorState) {
+				for (Map.Entry<Integer, ArrayList<Character>> entry : current_hashmap.entrySet()) {
 					int key = entry.getKey();
 					ArrayList<Character> value = entry.getValue();
-					if(value.contains(ch)) {
+					if (value.contains(ch)) {
 						new_state = current_transition_table[state][key];
-						if(new_state == Lexeme.ERROR) {
+						if (new_state == Lexeme.ERROR) {
 							isErrorState = true;
 							break;
 						} else {
@@ -70,17 +65,16 @@ public class LexemeChecker {
 						isErrorState = true;
 					}
 				}
-				if(isErrorState == false) {
+				if (isErrorState == false) {
 					state = new_state;
-					if(current_transition_table[state][accepting_index] == Lexeme.ACCEPTING_STATE) {
+					if (current_transition_table[state][accepting_index] == Lexeme.ACCEPTING_STATE) {
 						isAccepted = true;
 					} else {
 						isAccepted = false;
 					}
-					consumed_string += ch;
 				}
 			}
-			System.out.println("hellooo");
+			consumed_string += ch;
 		}
 		return result;
 	}

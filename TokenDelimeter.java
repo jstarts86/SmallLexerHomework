@@ -5,5 +5,9 @@ import java.util.List;
 public class TokenDelimeter {
 
 	    public static final List<Character> tokenDelimeterList =
-        Collections.unmodifiableList(Arrays.asList('=', ';','>', '<' ,'+', '-','*' ,'/', ')' , '(', ';', '\n', ' '));
+        Collections.unmodifiableList(Arrays.asList('=', ';','>', '<' ,'+', '-','*' ,'/', ')' , '(', ';', '\n', ' ', '\0'));
+
+		public static final List<Character> realTokenDelimeters =
+        Collections.unmodifiableList(Arrays.asList('=', ';','>', '<' ,'+', '-','*' ,'/', ')' , '(', ';', '\n', ' ', '\0'));
+
 }

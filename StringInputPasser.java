@@ -52,9 +52,18 @@ public class StringInputPasser {
 		this.isError = false;
 		this.delimeter = '\0';
 	}
+
+	public StringInputPasser(String nonConsumed) {
+		this.nonConsumed = nonConsumed;
+		this.consumed = "";
+		this.isAccepting = false;
+		this.isError = false;
+		this.delimeter = '\0';
+	}
+
 	@Override
 	public String toString() {
-		return "Non Consumed = " + nonConsumed + '\n'+
+		return //"Non Consumed = " + nonConsumed + '\n'+
 				"Consumed = " + consumed + '\n' +
 				"isAccepting = " + isAccepting + '\n'+
 				"isError = " + isError + '\n'+
