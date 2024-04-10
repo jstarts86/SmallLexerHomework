@@ -12,13 +12,17 @@ public class SmallLexer {
 		// stop when the lexer meets a token delemiter
 
 
-
 		return true;
 	}
 
 	public static void main(String[] args) throws IOException {
 		String content = Files.readString(Paths.get(args[0]));
 		System.out.println(content);
+		Identifier identifier = new Identifier();
+		LexemeChecker checker = new LexemeChecker();
+		StringInputPasser test = checker.check_lexeme("program\n", identifier);
+		System.out.println(test);
+
 
 	}
 }

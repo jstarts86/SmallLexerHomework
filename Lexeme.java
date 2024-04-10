@@ -6,17 +6,24 @@ public class Lexeme {
 	public static final int NON_ACCEPTING_STATE = -10;
 	public static final int ACCEPTING_STATE = -1;
 	private int[][] transitionTable;
-	private String currentWord;
 	private Boolean isAccepting;
 	private HashMap<Integer,ArrayList<Character>> inputChars;
-	private Boolean[][] advance_table;
+	private Boolean[][] advanceTable;
+
+	public Boolean[][] getAdvanceTable() {
+		return advanceTable;
+	}
+
+	public void setAdvanceTable(Boolean[][] advanceTable) {
+		this.advanceTable = advanceTable;
+	}
+
+	public void setInputChars(HashMap<Integer, ArrayList<Character>> inputChars) {
+		this.inputChars = inputChars;
+	}
 
 	public HashMap getInputChars() {
 		return inputChars;
-	}
-
-	public void setInputChars(HashMap inputChars) {
-		this.inputChars = inputChars;
 	}
 
 	public int[][] getTransitionTable() {
@@ -25,14 +32,6 @@ public class Lexeme {
 
 	public void setTransitionTable(int[][] transitionTable) {
 		this.transitionTable = transitionTable;
-	}
-
-	public String getCurrentWord() {
-		return currentWord;
-	}
-
-	public void setCurrentWord(String currentWord) {
-		this.currentWord = currentWord;
 	}
 
 	public Boolean getAccepting() {
