@@ -38,12 +38,21 @@ public class LexemeChecker {
 		for (int i = 0; i < current_string.length(); i++) {
 			int new_state = 0;
 			char ch = current_string.charAt(i);
-			if(TokenDelimeter.tokenDelimeterList.contains(ch)) {
+			if(CharacterList.tokenDelimeterList.contains(ch) && current_lexeme.getClass() != Comment.class) {
 				result.setDelimeter(ch);
 				result.setConsumed(consumed_string);
 				result.setAccepting(isAccepted);
 				result.setNonConsumed(current_string.substring(i + 1));
 				result.setError(isErrorState);
+				result.setWhichLexeme(current_lexeme);
+				return result;
+			} else if (ch == '\n' && current_lexeme.getClass() == Comment.class && isErrorState == false) {
+				result.setDelimeter(ch);
+				result.setConsumed(consumed_string);
+				result.setAccepting(isAccepted);
+				result.setNonConsumed(current_string.substring(i + 1));
+				result.setError(isErrorState);
+				result.setWhichLexeme(current_lexeme);
 				return result;
 			}
 

@@ -4,6 +4,15 @@ public class StringInputPasser {
 	private String nonConsumed;
 	private Boolean isAccepting;
 	private Boolean isError;
+	private Lexeme whichLexeme;
+
+	public Lexeme getWhichLexeme() {
+		return whichLexeme;
+	}
+
+	public void setWhichLexeme(Lexeme whichLexeme) {
+		this.whichLexeme = whichLexeme;
+	}
 
 	public char getDelimeter() {
 		return delimeter;
@@ -67,6 +76,8 @@ public class StringInputPasser {
 				"Consumed = " + consumed + '\n' +
 				"isAccepting = " + isAccepting + '\n'+
 				"isError = " + isError + '\n'+
+				"Lexeme = " + whichLexeme + '\n'+
 				"Delimiter = " + delimeter;
+
 	}
 }
