@@ -37,6 +37,8 @@ public class Identifier extends Lexeme{
         for (int i = '0'; i <= '9'; i++) {
             allDigits.add((char) i);
         }
+		allDigits.add('_');
+		allDigits.add('.');
 		map.put(2, allDigits);
 		this.setTransitionTable(array);
 		this.setInputChars(map);

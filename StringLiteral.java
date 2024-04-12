@@ -7,11 +7,10 @@ public class StringLiteral extends Lexeme {
 		this.setAccepting(false);
 		int[][] array = {
 			//   $ , Letter, Digit
-				{1, ERROR, ERROR, NON_ACCEPTING_STATE},
-				{2, ERROR, ERROR, NON_ACCEPTING_STATE},
-				{4, 4, 3, NON_ACCEPTING_STATE},
-				{ERROR, ERROR, ERROR, ACCEPTING_STATE},
-				{4, 4, 3, NON_ACCEPTING_STATE}
+				{1, ERROR, NON_ACCEPTING_STATE},
+				{2, 3, NON_ACCEPTING_STATE},
+				{ERROR,ERROR, ACCEPTING_STATE},
+				{2, 3, NON_ACCEPTING_STATE},
 		};
 		Boolean[][] advance_table = {
 				{true, true,false },

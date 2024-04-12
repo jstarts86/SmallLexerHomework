@@ -24,7 +24,7 @@ public class Comment extends Lexeme {
 		map.put(0, dash_list);
 		ArrayList<Character> all_char_except_NewLine_Dash = new ArrayList<>();
         for (char c = '\u0000'; c < '\uFFFF'; c++) {
-            if (c != '\n' && c != '\r' && c != '-') {
+            if (c != '\n' && c != '-') {
                 all_char_except_NewLine_Dash.add(c);
             }
         }

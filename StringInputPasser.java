@@ -72,7 +72,7 @@ public class StringInputPasser {
 
 	@Override
 	public String toString() {
-		return //"Non Consumed = " + nonConsumed + '\n'+
+		return "Non Consumed = " + nonConsumed + '\n'+
 				"Consumed = " + consumed + '\n' +
 				"isAccepting = " + isAccepting + '\n'+
 				"isError = " + isError + '\n'+
