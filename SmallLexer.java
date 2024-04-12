@@ -3,138 +3,83 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 
 public class SmallLexer {
-	public Boolean check_token(String lexeme) {
-		//jchecker
-		int state = 1;
-		char current_char = lexeme.charAt(0);
-		// check a string of characters until they meet a token delimeter
+    public static void main(String[] args) throws IOException {
+	    String[] files = {"Input1.txt", "Input2.txt", "Input1error.txt", "Input2error.txt"};
+        for (String file : files) {
+			System.out.println("\n");
+            System.out.println("Processing: " + file);
+            String content = Files.readString(Paths.get(file));
+            //intialize all Lexemes
+            Identifier identifier = new Identifier();
+            Comment comment = new Comment();
+            StringLiteral stringLiteral = new StringLiteral();
+            NumberLiteral numberLiteral = new NumberLiteral();
 
-		// stop when the lexer meets a token delemiter
+            LexemeProcessor checker = new LexemeProcessor();
 
-
-		return true;
-	}
-
-	public static void main(String[] args) throws IOException {
-		String content = Files.readString(Paths.get(args[0]));
-		System.out.println(content);
-		Identifier identifier = new Identifier();
-		Comment comment = new Comment();
-		StringLiteral stringLiteral = new StringLiteral();
-		NumberLiteral numberLiteral = new NumberLiteral();
-		LexemeChecker checker = new LexemeChecker();
-		StringInputPasser test = new StringInputPasser(content);
-		StringInputPasser temp_holder = new StringInputPasser(content);
-		while(!test.getNonConsumed().isEmpty()) {
-			if(!test.getConsumed().isEmpty() && CharacterList.blankTokenDelimeterList.contains(test.getNonConsumed().charAt(0))) {
-				test.setNonConsumed(test.getNonConsumed().stripLeading());
-			}
-
-			else if(Character.isAlphabetic(test.getNonConsumed().charAt(0)) || test.getNonConsumed().charAt(0) == '$') {
-				// if consumed is not empty character or \n then print out Consumed and
-				temp_holder = checker.check_lexeme(test.getNonConsumed(), identifier);
-				if(!temp_holder.getError()) {
-					test = checker.check_lexeme(test.getNonConsumed(),identifier);
-					checker.printTokenDelimeters(test.getDelimeter());
-					checker.correctOutputWithGivenLexeme(test);
-				}
-
-			}else if(test.getNonConsumed().charAt(0) == '-') {
-				temp_holder = checker.check_lexeme(test.getNonConsumed(), comment);
-				if(!temp_holder.getError()) {
-					test = checker.check_lexeme(test.getNonConsumed(),comment);
-					checker.printTokenDelimeters(test.getDelimeter());
-					checker.correctOutputWithGivenLexeme(test);
-				}
-			}
-			else if(test.getNonConsumed().charAt(0) == '"') {
-				temp_holder = checker.check_lexeme(test.getNonConsumed(), stringLiteral);
-				if(!temp_holder.getError()) {
-					test = checker.check_lexeme(test.getNonConsumed(),stringLiteral);
-					checker.printTokenDelimeters(test.getDelimeter());
-			        checker.correctOutputWithGivenLexeme(test);
-				}
-			} else if(Character.isDigit(test.getNonConsumed().charAt(0))) {
-				temp_holder = checker.check_lexeme(test.getNonConsumed(), numberLiteral);
-				if(!temp_holder.getError()) {
-					test = checker.check_lexeme(test.getNonConsumed(),numberLiteral);
-					checker.printTokenDelimeters(test.getDelimeter());
-			        checker.correctOutputWithGivenLexeme(test);
-				} else {
-					temp_holder = checker.check_lexeme(test.getNonConsumed(), identifier);
-					if (temp_holder.getError()) {
-						test = checker.check_lexeme(test.getNonConsumed(), identifier);
-					if(test.getConsumed().charAt(0) != '$' || !Character.isAlphabetic(test.getConsumed().charAt(0))) {
-						System.out.println(test.getConsumed() + "             illegal ID starting with wrong character");
-						checker.printTokenDelimeters(test.getDelimeter());
-					}
-					}
-				}
-			} else if(CharacterList.realTokenDelimeters.contains(test.getNonConsumed().charAt(0))){
-				checker.printTokenDelimeters(test.getNonConsumed().charAt(0));
-				test.setNonConsumed(test.getNonConsumed().substring(1));
-			} else {
-				// if consumed is not empty character or \n then print out Consumed and
-				temp_holder = checker.check_lexeme(test.getNonConsumed(), identifier);
-				if (temp_holder.getError()) {
-					test = checker.check_lexeme(test.getNonConsumed(), identifier);
-					if(test.getConsumed().charAt(0) != '$' || !Character.isAlphabetic(test.getConsumed().charAt(0))) {
-						System.out.println(test.getConsumed() + "             illegal ID starting with wrong character");
-						checker.printTokenDelimeters(test.getDelimeter());
-					}
-				}
-			}
-//			test = checker.check_lexeme(test.getNonConsumed(), identifier);
-//			checker.printTokenDelimeters(test.getDelimeter());
-//			checker.correctOutputWithGivenLexeme(test);
-
-		}
-//		while(!test.getNonConsumed().isEmpty()) {
-//			switch (test.getNonConsumed().charAt(0)) {
-//				case ' ', '\n':
-//					System.out.println("hiiiiiiiiiIIIII");
-//					test.setNonConsumed(test.getNonConsumed().substring(1));
-//					continue;
-//				case '-':
-//					temp_holder = checker.check_lexeme(test.getNonConsumed(),comment);
-//					if(!temp_holder.getError()) {
-//						continue;
-//					} else {
-////						test = checker.check_lexeme(temp_holder.getNonConsumed(),comment);
-//						break;
-//					}
-//				case '$':
-//					temp_holder = checker.check_lexeme(test.getNonConsumed(),identifier);
-//					if(!temp_holder.getError()) {
-//						continue;
-//					} else {
-////						test = checker.check_lexeme(temp_holder.getNonConsumed(),identifier);
-//						break;
-//					}
-//				case '"':
-//					temp_holder = checker.check_lexeme(test.getNonConsumed(), stringLiteral);
-//					if(!temp_holder.getError()) {
-//						continue;
-//					} else {
-////						test = checker.check_lexeme(temp_holder.getNonConsumed(), stringLiteral);
-//						break;
-//					}
-//
-//				default:
-//					if(Character.isAlphabetic(test.getNonConsumed().charAt(0))) {
-//						break;
-//					} if(test.getNonConsumed().charAt(0) == ' ' || test.getNonConsumed().charAt(0) == '\n' ) {
-//
-//						break;
-//					}
-//			}
-
-//			System.out.println("this is test");
-//			System.out.println(test);
-//			test = temp_holder;
-//			System.out.println("this is temp");
-//			System.out.println(temp_holder);
-//			System.out.print('\n');
-		//}
-	}
+            LexerContext currentInputState = new LexerContext(content);
+            LexerContext lexeme_check = new LexerContext(content);
+            //go through the whole string until there is nothing left to check
+            while(!currentInputState.getNonConsumed().isEmpty()) {
+                if (!currentInputState.getConsumed().isEmpty() && CharacterList.blankTokenDelimeterList.contains(currentInputState.getNonConsumed().charAt(0))) {
+                    currentInputState.setNonConsumed(currentInputState.getNonConsumed().stripLeading());
+                }
+                //checking for identifier
+                else if (Character.isAlphabetic(currentInputState.getNonConsumed().charAt(0)) || currentInputState.getNonConsumed().charAt(0) == '$') {
+                    lexeme_check = checker.check_lexeme(currentInputState.getNonConsumed(), identifier);
+                    if (!lexeme_check.getError()) {
+                        currentInputState = checker.check_lexeme(currentInputState.getNonConsumed(), identifier);
+                        checker.printTokenDelimeters(currentInputState.getDelimeter());
+                        checker.correctOutputWithGivenLexeme(currentInputState);
+                    }
+                } // checking for comment
+                else if (currentInputState.getNonConsumed().charAt(0) == '-') {
+                    lexeme_check = checker.check_lexeme(currentInputState.getNonConsumed(), comment);
+                    if (!lexeme_check.getError()) {
+                        currentInputState = checker.check_lexeme(currentInputState.getNonConsumed(), comment);
+                        checker.printTokenDelimeters(currentInputState.getDelimeter());
+                        checker.correctOutputWithGivenLexeme(currentInputState);
+                    }
+                } //checking for String Literal
+                else if (currentInputState.getNonConsumed().charAt(0) == '"') {
+                    lexeme_check = checker.check_lexeme(currentInputState.getNonConsumed(), stringLiteral);
+                    if (!lexeme_check.getError()) {
+                        currentInputState = checker.check_lexeme(currentInputState.getNonConsumed(), stringLiteral);
+                        checker.printTokenDelimeters(currentInputState.getDelimeter());
+                        checker.correctOutputWithGivenLexeme(currentInputState);
+                    }
+                } // checking for number literal
+                else if (Character.isDigit(currentInputState.getNonConsumed().charAt(0))) {
+                    lexeme_check = checker.check_lexeme(currentInputState.getNonConsumed(), numberLiteral);
+                    if (!lexeme_check.getError()) {
+                        currentInputState = checker.check_lexeme(currentInputState.getNonConsumed(), numberLiteral);
+                        checker.printTokenDelimeters(currentInputState.getDelimeter());
+                        checker.correctOutputWithGivenLexeme(currentInputState);
+                    } else {
+                        lexeme_check = checker.check_lexeme(currentInputState.getNonConsumed(), identifier);
+                        if (lexeme_check.getError()) {
+                            currentInputState = checker.check_lexeme(currentInputState.getNonConsumed(), identifier);
+                            if (currentInputState.getConsumed().charAt(0) != '$' || !Character.isAlphabetic(currentInputState.getConsumed().charAt(0))) {
+                                System.out.println(currentInputState.getConsumed() + "             illegal ID starting with wrong character");
+                                checker.printTokenDelimeters(currentInputState.getDelimeter());
+                            }
+                        }
+                    }
+                } // if first character is token delimiter print out the output and then concatenate
+                else if (CharacterList.realTokenDelimeters.contains(currentInputState.getNonConsumed().charAt(0))) {
+                    checker.printTokenDelimeters(currentInputState.getNonConsumed().charAt(0));
+                    currentInputState.setNonConsumed(currentInputState.getNonConsumed().substring(1));
+                } else {
+                    lexeme_check = checker.check_lexeme(currentInputState.getNonConsumed(), identifier);
+                    if (lexeme_check.getError()) {
+                        currentInputState = checker.check_lexeme(currentInputState.getNonConsumed(), identifier);
+                        if (currentInputState.getConsumed().charAt(0) != '$' || !Character.isAlphabetic(currentInputState.getConsumed().charAt(0))) {
+                            System.out.println(currentInputState.getConsumed() + "             illegal ID starting with wrong character");
+                            checker.printTokenDelimeters(currentInputState.getDelimeter());
+                        }
+                    }
+                }
+            }
+        }
+    }
 }

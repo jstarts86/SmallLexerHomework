@@ -2,6 +2,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 
 public class Lexeme {
+	//Constants to indicate ERROR, NON ACCEPTING STATES, and ACCEPTING STATES
 	public static final int ERROR = -1000;
 	public static final int NON_ACCEPTING_STATE = -10;
 	public static final int ACCEPTING_STATE = -1;

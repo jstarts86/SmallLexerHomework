@@ -1,4 +1,4 @@
-public class StringInputPasser {
+public class LexerContext {
 	private String consumed;
 	private char delimeter;
 	private String nonConsumed;
@@ -54,7 +54,7 @@ public class StringInputPasser {
 		isAccepting = accepting;
 	}
 
-	public StringInputPasser() {
+	public LexerContext() {
 		this.nonConsumed = "";
 		this.consumed = "";
 		this.isAccepting = false;
@@ -62,7 +62,7 @@ public class StringInputPasser {
 		this.delimeter = '\0';
 	}
 
-	public StringInputPasser(String nonConsumed) {
+	public LexerContext(String nonConsumed) {
 		this.nonConsumed = nonConsumed;
 		this.consumed = "";
 		this.isAccepting = false;

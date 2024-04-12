@@ -1,7 +1,7 @@
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
-public class LexemeChecker {
+public class LexemeProcessor {
 	private int state = 0;
 	private boolean isAccepted;
 
@@ -21,9 +21,9 @@ public class LexemeChecker {
 		isAccepted = accepted;
 	}
 
-	public StringInputPasser check_lexeme(String current_string, Lexeme current_lexeme) {
+	public LexerContext check_lexeme(String current_string, Lexeme current_lexeme) {
 		int accepting_index = current_lexeme.getTransitionTable()[0].length - 1;
-		StringInputPasser result = new StringInputPasser();
+		LexerContext result = new LexerContext();
 		String consumed_string = "";
 		int current_transition_table[][] = current_lexeme.getTransitionTable();
 		HashMap<Integer, ArrayList<Character>> current_hashmap = current_lexeme.getInputChars();
@@ -37,7 +37,7 @@ public class LexemeChecker {
 		for (int i = 0; i < current_string.length(); i++) {
 			int new_state = 0;
 			char ch = current_string.charAt(i);
-			//
+			// if the current input is not going through a comment or string literal if you meet a token delimiter return the
 			if(CharacterList.tokenDelimeterList.contains(ch) && current_lexeme.getClass() != Comment.class && current_lexeme.getClass() != StringLiteral.class) {
 				result.setDelimeter(ch);
 				result.setConsumed(consumed_string);
@@ -107,7 +107,7 @@ public class LexemeChecker {
 		}
 		return result;
 	}
-	public void correctOutputWithGivenLexeme(StringInputPasser processed_word) {
+	public void correctOutputWithGivenLexeme(LexerContext processed_word) {
 		if(processed_word.getWhichLexeme().getClass() == Identifier.class) {
 			if(!processed_word.getError()) {
 				if(CharacterList.keyWordList.contains(processed_word.getConsumed())) {
