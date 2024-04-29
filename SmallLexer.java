@@ -28,8 +28,8 @@ public class SmallLexer {
                 lexeme_check = checker.check_lexeme(currentInputState.getNonConsumed(), identifier);
                 if (!lexeme_check.getError()) {
                     currentInputState = checker.check_lexeme(currentInputState.getNonConsumed(), identifier);
-                    checker.printTokenDelimeters(currentInputState.getDelimeter());
                     checker.correctOutputWithGivenLexeme(currentInputState);
+                    checker.printTokenDelimeters(currentInputState.getDelimeter());
                 }
             } // checking for comment
             else if (currentInputState.getNonConsumed().charAt(0) == '-') {
@@ -79,7 +79,7 @@ public class SmallLexer {
                 }
             }
         }
-        System.out.print(checker.getTokenList());
+//        System.out.print(checker.getTokenList());
         return checker.getTokenList();
     }
    /* public static void main(String[] args) throws IOException {
