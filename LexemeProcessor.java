@@ -1,9 +1,22 @@
+import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
+
 public class LexemeProcessor {
 	private int state = 0;
 	private boolean isAccepted;
+
+	public ArrayList<String> getTokenList() {
+		return tokenList;
+	}
+
+	public void setTokenList(ArrayList<String> tokenList) {
+		this.tokenList = tokenList;
+	}
+
+	private ArrayList<String> tokenList = new ArrayList<>();
 
 	public int getState() {
 		return state;
@@ -111,9 +124,45 @@ public class LexemeProcessor {
 		if(processed_word.getWhichLexeme().getClass() == Identifier.class) {
 			if(!processed_word.getError()) {
 				if(CharacterList.keyWordList.contains(processed_word.getConsumed())) {
-					System.out.println(processed_word.getConsumed()+ "                "   + "keyword");
+					switch (processed_word.getConsumed()) {
+						case "program":
+							tokenList.add(processed_word.getConsumed());
+							System.out.println(processed_word.getConsumed() + "                " + "program");
+							break;
+						case "begin":
+							tokenList.add(processed_word.getConsumed());
+							System.out.println(processed_word.getConsumed() + "                " + "begin");
+							break;
+						case "end":
+							tokenList.add(processed_word.getConsumed());
+							System.out.println(processed_word.getConsumed() + "                " + "end");
+							break;
+						case "int":
+							tokenList.add(processed_word.getConsumed());
+							System.out.println(processed_word.getConsumed() + "                " + "int");
+							break;
+						case "print_line":
+							tokenList.add(processed_word.getConsumed());
+							System.out.println(processed_word.getConsumed() + "                " + "print_line");
+							break;
+						case "if":
+							tokenList.add(processed_word.getConsumed());
+							System.out.println(processed_word.getConsumed() + "                " + "if");
+							break;
+						case "else_if":
+							tokenList.add(processed_word.getConsumed());
+							System.out.println(processed_word.getConsumed() + "                " + "else_if");
+							break;
+						case "else":
+							tokenList.add(processed_word.getConsumed());
+							System.out.println(processed_word.getConsumed() + "                " + "else");
+							break;
+						default:
+							tokenList.add("keyword");
+							System.out.println(processed_word.getConsumed() + "                " + "keyword");
+					}
 				} else {
-
+					tokenList.add("identifier");
 					System.out.println(processed_word.getConsumed()+ "                "  + "identifier");
 				}
 			}
@@ -123,10 +172,12 @@ public class LexemeProcessor {
 			}
 		} else if(processed_word.getWhichLexeme().getClass() == StringLiteral.class) {
 			if(!processed_word.getError()) {
+				tokenList.add("string_literal");
 				System.out.println(processed_word.getConsumed()+ "                "   + "String Literal");
 			}
 		} else if(processed_word.getWhichLexeme().getClass() == NumberLiteral.class) {
 			if(!processed_word.getError()) {
+				tokenList.add("number_literal");
 				System.out.println(processed_word.getConsumed()+ "                "   + "Number Literal");
 			}
 		}
@@ -136,33 +187,43 @@ public class LexemeProcessor {
 	public void printTokenDelimeters(Character tokenDelemiter) {
 		switch (tokenDelemiter) {
 			case '=':
+				tokenList.add("assignment_operator");
 				System.out.println("=" + "                " + "assignment operator");
 				break;
 			case '>':
+				tokenList.add("greater_than_operator");
 				System.out.println(">" + "                " + "greater than operator");
 				break;
 			case '<':
+				tokenList.add("less_than_operator");
 				System.out.println("<" + "                " + "less than operator");
 				break;
 			case '+':
+				tokenList.add("plus_operator");
 				System.out.println("+" + "                " + "plus operator");
 				break;
 			case '-':
+				tokenList.add("minus_operator");
 				System.out.println("-"+ "                "  + "minus operator");
 				break;
 			case '*':
+				tokenList.add("multiplication_operator");
 				System.out.println("*" + "                "  + "multiplication operator");
 				break;
 			case ')':
+				tokenList.add("right_paranthesis_operator");
 				System.out.println(")"+ "                " + "right parenthesis operator");
 				break;
 			case '(':
+				tokenList.add("left_paranthesis_operator");
 				System.out.println("("+ "                "  + "left paranthesis operator");
 				break;
 			case ';':
+				tokenList.add("statement_terminator");
 				System.out.println(";" + "                "  + "statement terminator");
 				break;
 			case ',':
+				tokenList.add("punctuation_comma");
 				System.out.println("," + "                "  + "punctuation - comma");
 		}
 	}

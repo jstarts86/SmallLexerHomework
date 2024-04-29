@@ -4,7 +4,7 @@ import java.nio.file.Paths;
 
 public class SmallLexer {
     public static void main(String[] args) throws IOException {
-	    String[] files = {"Input1.txt", "Input2.txt", "Input1error.txt", "Input2error.txt"};
+	    String[] files = {"Input1.txt", "Input2.txt", "Input1error.txt", "Input2error.txt","Input3.txt" };
         for (String file : files) {
 			System.out.println("\n");
             System.out.println("Processing: " + file);
@@ -80,6 +80,7 @@ public class SmallLexer {
                     }
                 }
             }
+            System.out.print(checker.getTokenList());
         }
     }
 }
