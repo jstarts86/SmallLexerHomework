@@ -3,14 +3,14 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Objects;
 
-public class SmallParser {
+public class RecurParser {
 	private ArrayList<String> tokenList = new ArrayList<>();
 	private int currentIndex = 0;
 	private int lookAheadIndex = 1;
 	private Boolean isError = false;
 	private int begin_count;
 	private int end_count;
-	public SmallParser(ArrayList<String> tokenList) {
+	public RecurParser(ArrayList<String> tokenList) {
 		this.tokenList = tokenList;
 	}
 
@@ -207,7 +207,7 @@ public class SmallParser {
 	public static void main(String[] args) throws IOException {
 		SmallLexer lexer = new SmallLexer();
 		ArrayList<String> tokenList = SmallLexer.lexIntoTokenList(args[0]);
-		SmallParser parser = new SmallParser(tokenList);
+		RecurParser parser = new RecurParser(tokenList);
 		parser.program_statement();
 
 		System.out.println(" ");
