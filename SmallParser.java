@@ -1,3 +1,4 @@
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Objects;
 
@@ -5,7 +6,11 @@ public class SmallParser {
 	private ArrayList<String> tokenList = new ArrayList<>();
 	private int currentIndex = 0;
 	private int lookAheadIndex = 1;
-	private Boolean isError;
+	private Boolean isError = false;
+
+	public SmallParser(ArrayList<String> tokenList) {
+		this.tokenList = tokenList;
+	}
 
 	public ArrayList<String> getTokenList() {
 		return tokenList;
@@ -44,8 +49,13 @@ public class SmallParser {
 			this.setCurrentIndex(this.getCurrentIndex() + 1);
 			this.setLookAheadIndex(this.getLookAheadIndex() + 1);
 		} else {
-			System.out.println("Missing" + this.getTokenList().get(this.getCurrentIndex()));
-			this.setError(false);
+
+			System.out.println(" ");
+			System.out.println("Expected " + token);
+			System.out.println("Missing " + this.getTokenList().get(this.getCurrentIndex()));
+			System.out.println("Index " + this.currentIndex);
+			this.setError(true);
+			return;
 		}
 	}
 
@@ -56,51 +66,68 @@ public class SmallParser {
 		this.body_sequence();
 		this.match("end");
 	}
-	public void body_sequence() {
-		this.body();
-		this.body_sequence_tail();
-	}
+
 
 	public void body() {
-		if(Objects.equals(this.getTokenList().get(lookAheadIndex), "int")) {
-			this.int_statement_sequence();
+		if(Objects.equals(this.getTokenList().get(currentIndex), "int")) {
+			this.int_statement();
 		}
-		if(Objects.equals(this.getTokenList().get(lookAheadIndex), "if")) {
+		else if(Objects.equals(this.getTokenList().get(currentIndex), "if")) {
 			this.if_statement();
 		}
-		if(Objects.equals(this.getTokenList().get(lookAheadIndex), "else")) {
+		else if(Objects.equals(this.getTokenList().get(currentIndex), "else")) {
 			this.else_statement();
 		}
-		if(Objects.equals(this.getTokenList().get(lookAheadIndex), "else_if")) {
+		else if(Objects.equals(this.getTokenList().get(currentIndex), "else_if")) {
 			this.else_if_statement();
 		}
-		if(Objects.equals(this.getTokenList().get(lookAheadIndex), "print_line")) {
+		else if(Objects.equals(this.getTokenList().get(currentIndex), "print_line")) {
 			this.print_line_statement();
+		}
+		else if(Objects.equals(this.getTokenList().get(currentIndex), "identifier")) {
+			if(!Objects.equals(tokenList.get(currentIndex - 1), "int")) {
+				declaration_statement();
+			}
 		}
 	}
 	public void body_sequence_tail() {
-		if(Objects.equals(this.getTokenList().get(lookAheadIndex), "statement_terminator")) {
-			this.match("statement_terminator");
+		body_sequence();
+	}
+
+	public void body_sequence() {
+		while(currentIndex < tokenList.size() && !getError() && !Objects.equals(tokenList.get(currentIndex), "end")) {
+			body();
 		}
 	}
-	public void int_statement_sequence() {
-		this.int_statement();
-		this.int_statement_tail();
+	public void declaration_statement() {
+			this.match("identifier");
+			if(!getError() && Objects.equals(tokenList.get(currentIndex), "assignment_operator")) {
+				this.match("assignment_operator");
+				this.match("number_literal");
+			}
+			if(currentIndex < tokenList.size() && Objects.equals(tokenList.get(currentIndex), "punctuation_comma") && !getError() && Objects.equals(tokenList.get(currentIndex),
+					"statement_terminator")) {
+				this.line_terminator();
+			}
 	}
+	public void declaration_statement_sequence() {
+		while (currentIndex < tokenList.size() && Objects.equals(tokenList.get(currentIndex), ",") && !getError()) {
+			this.declaration_statement();
+		}
+	}
+
+
 	public void int_statement() {
 		this.match("int");
-		this.match("identifier");
-		this.match("assignment_operator");
-		this.match("number_literal");
-		if(Objects.equals(this.getTokenList().get(currentIndex), "punctuation_comma")) {
-			this.match("comma");
-		} else {
-			this.match("statement_terminator");
+		if(!getError()) {
+			this.declaration_statement_sequence();
 		}
 	}
-	public void int_statement_tail() {
-		if(Objects.equals(this.tokenList.get(lookAheadIndex), "int")) {
-			this.int_statement_sequence();
+	public void line_terminator() {
+		if(Objects.equals(this.tokenList.get(currentIndex), "statement_terminator")) {
+			this.match("statement_terminator");
+		}else {
+			this.match("punctuation_comma");
 		}
 	}
 	public void if_statement() {
@@ -118,11 +145,11 @@ public class SmallParser {
 		this.match("end");
 	}
 	public void if_conditional() {
-		this.match("left_paranthesis_operator");
+		this.match("left_parenthesis_operator");
 		this.if_argument();
 		this.conditional_operator();
 		this.if_argument();
-		this.match("right_paranthesis_operator");
+		this.match("right_parenthesis_operator");
 	}
 	public void if_argument() {
 		if(Objects.equals(this.tokenList.get(currentIndex), "number_literal")) {
@@ -146,11 +173,22 @@ public class SmallParser {
 	}
 	public void print_line_statement() {
 		this.match("print_line");
-		this.match("left_paranthesis_operator");
+		this.match("left_parenthesis_operator");
 		this.match("string_literal");
-		this.match("right_paranthesis_operator");
-		this.match("statement_terminator");
+		this.match("right_parenthesis_operator");
+		this.line_terminator();
 	}
 
+	public static void main(String[] args) throws IOException {
+		SmallLexer lexer = new SmallLexer();
+		ArrayList<String> tokenList = SmallLexer.lexIntoTokenList("test1.txt");
+		SmallParser parser = new SmallParser(tokenList);
+		parser.program_statement();
+		if(!parser.getError()) {
+			System.out.println("Parsing successful");
+		} else {
+			System.out.println("Parsing failed");
+		}
 
+	}
 }

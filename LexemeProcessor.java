@@ -211,12 +211,12 @@ public class LexemeProcessor {
 				System.out.println("*" + "                "  + "multiplication operator");
 				break;
 			case ')':
-				tokenList.add("right_paranthesis_operator");
+				tokenList.add("right_parenthesis_operator");
 				System.out.println(")"+ "                " + "right parenthesis operator");
 				break;
 			case '(':
-				tokenList.add("left_paranthesis_operator");
-				System.out.println("("+ "                "  + "left paranthesis operator");
+				tokenList.add("left_parenthesis_operator");
+				System.out.println("("+ "                "  + "left parenthesis operator");
 				break;
 			case ';':
 				tokenList.add("statement_terminator");
