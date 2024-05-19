@@ -80,6 +80,7 @@ public class SmallLexer {
             }
         }
 //        System.out.print(checker.getTokenList());
+        checker.getTokenList().add("$");
         return checker.getTokenList();
     }
    /* public static void main(String[] args) throws IOException {
