@@ -4,7 +4,7 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 
 public class SmallLexer {
-    public static ArrayList<String> lexIntoTokenList(String file) throws IOException {
+    public static ArrayList<TokenTerminal> lexIntoTokenList(String file) throws IOException {
         System.out.println("\n");
         System.out.println("Processing: " + file);
         String content = Files.readString(Paths.get(file));
@@ -80,7 +80,7 @@ public class SmallLexer {
             }
         }
 //        System.out.print(checker.getTokenList());
-        checker.getTokenList().add("$");
+        checker.getTokenList().add(new TokenTerminal("eof","$"));
         return checker.getTokenList();
     }
    /* public static void main(String[] args) throws IOException {

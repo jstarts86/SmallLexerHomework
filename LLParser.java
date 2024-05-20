@@ -13,12 +13,22 @@ public class LLParser {
 
 	public static void main(String[] args) throws IOException {
 		SmallLexer lexer = new SmallLexer();
-		ArrayList<String> tokenList = new ArrayList<>();
-		tokenList = lexer.lexIntoTokenList("test1.txt");
-		System.out.println(tokenList);
+		ArrayList<TokenTerminal> tokenList = lexer.lexIntoTokenList("test1.txt");
+		//System.out.println(tokenList);
+//		for(TokenTerminal tok: tokenList) {
+//			System.out.print(tok.getTerminal() + " and ");
+//			System.out.print(tok.getToken() + ", ");
+//
+//		}
 		Map<String, Terminal> terminals = new HashMap<>();
 		Map<String, NonTerminal> nonTerminals = new HashMap<>();
 		Map<String, Symbol> s = new HashMap<>();
+		String lookahead;
+		Stack<Symbol> stack = new Stack<>();
+		stack.push(new Terminal("$"));
+		stack.push(new NonTerminal("Program_Statement"));
+
+
 
 		for (String terminalName : Symbol.terminalList) {
 			Terminal terminal = new Terminal(terminalName);
@@ -38,16 +48,21 @@ public class LLParser {
 
 		Production body_if = new Production((NonTerminal) s.get("Body"), List.of(s.get("If_Statement")));
 		Production body_else = new Production((NonTerminal) s.get("Body"), List.of(s.get("Else_Statement")));
+		Production body_else_if = new Production((NonTerminal) s.get("Body"), List.of(s.get("Else_If_Statement")));
 		Production body_print = new Production((NonTerminal) s.get("Body"), List.of(s.get("Print_Statement")));
 		Production body_dec = new Production((NonTerminal) s.get("Body"), List.of(s.get("Declaration_Statement")));
 		Production line_Terminator = new Production((NonTerminal) s.get("Line_Terminator"), List.of(s.get("statement_terminator")));
 		Production line_Terminator_comma = new Production((NonTerminal) s.get("Line_Terminator"), List.of(s.get("punctuation_comma")));
 		Production int_Statement = new Production((NonTerminal) s.get("Int_Statement"), List.of(s.get("int"),s.get("Declaration_Statement")));
-		Production declaration_Statement = new Production((NonTerminal) s.get("Declaration_Statement"), List.of(s.get("identifier"),s.get("assignment_operator"),s.get("Expression"), s.get("Line_Terminator")));
+		Production declaration_Statement = new Production((NonTerminal) s.get("Declaration_Statement"), List.of(s.get("identifier"), s.get("Declaration_End")));
+
+		Production declaration_End_line_term = new Production((NonTerminal) s.get("Declaration_End"), List.of( s.get("Line_Terminator")));
+		Production declaration_End_equal = new Production((NonTerminal) s.get("Declaration_End"), List.of(s.get("assignment_operator"), s.get("Expression"), s.get("Line_Terminator")));
 		Production declaration_Sequence = new Production((NonTerminal) s.get("Declaration_Sequence"), List.of(s.get("Declaration_Statement"),s.get("Declaration_Tail")));
 		Production declaration_Tail = new Production((NonTerminal) s.get("Declaration_Sequence"), List.of(s.get("Declaration_Statement"),s.get("Declaration_Tail")));
 		Production declaration_Tail_eps = new Production((NonTerminal) s.get("Declaration_Sequence"), List.of(s.get("eps")));
 		Production if_Statement = new Production((NonTerminal) s.get("If_Statement"), List.of(s.get("if"), s.get("If_Conditional") ,s.get("begin"), s.get("Body_Sequence"), s.get("end")));
+		Production else_If_Statement = new Production((NonTerminal) s.get("Else_If_Statement"), List.of(s.get("else_if"), s.get("If_Conditional") ,s.get("begin"), s.get("Body_Sequence"), s.get("end")));
 
 		Production if_Conditional = new Production((NonTerminal) s.get("If_Conditional"), List.of(s.get("left_parenthesis_operator"), s.get("If_Argument") ,s.get("Conditional_Operator"), s.get(
 				"If_Argument"),
@@ -70,95 +85,184 @@ public class LLParser {
 		Production expression_Tail_mult = new Production((NonTerminal) s.get("Expression"), List.of(s.get("multiplication_operator"),s.get("Expression")));
 
 
-		Map<NonTerminal, Map<Terminal, Production>> parsingTable = new HashMap<>();
+        // Parsing table entries
+        Map<String, Map<String, Production>> parsingTable = new HashMap<>();
+        addToParsingTable(parsingTable, "Program_Statement", "program", program_Statement);
+        addToParsingTable(parsingTable, "Body_Sequence", "int", body_Sequence);
+        addToParsingTable(parsingTable, "Body_Sequence", "if", body_Sequence);
+        addToParsingTable(parsingTable, "Body_Sequence", "else", body_Sequence);
+		addToParsingTable(parsingTable, "Body_Sequence", "else_if", body_Sequence);
+        addToParsingTable(parsingTable, "Body_Sequence", "print_line", body_Sequence);
+        addToParsingTable(parsingTable, "Body_Sequence", "identifier", body_Sequence);
 
-		LLParser.addToParsingTable(parsingTable,nonTerminals.get("Program_Statement"), terminals.get("program"), program_Statement);
-		LLParser.addToParsingTable(parsingTable,nonTerminals.get("Body_Sequence"), terminals.get("int"), body_Sequence);
-		LLParser.addToParsingTable(parsingTable,nonTerminals.get("Body_Sequence"), terminals.get("if"), body_Sequence);
-		LLParser.addToParsingTable(parsingTable,nonTerminals.get("Body_Sequence"), terminals.get("else"), body_Sequence);
-		LLParser.addToParsingTable(parsingTable,nonTerminals.get("Body_Sequence"), terminals.get("print_line"), body_Sequence);
-		LLParser.addToParsingTable(parsingTable,nonTerminals.get("Body_Sequence"), terminals.get("identifier"), body_Sequence);
+        // Body Sequence Tail
+        addToParsingTable(parsingTable, "Body_Sequence_Tail", "int", body_Sequence_Tail);
+        addToParsingTable(parsingTable, "Body_Sequence_Tail", "if", body_Sequence_Tail);
+        addToParsingTable(parsingTable, "Body_Sequence_Tail", "else", body_Sequence_Tail);
+		addToParsingTable(parsingTable, "Body_Sequence_Tail", "else_if", body_Sequence_Tail);
+        addToParsingTable(parsingTable, "Body_Sequence_Tail", "print_line", body_Sequence_Tail);
+        addToParsingTable(parsingTable, "Body_Sequence_Tail", "identifier", body_Sequence_Tail);
+		addToParsingTable(parsingTable, "Body_Sequence_Tail", "end", body_Sequence_Tail);
+        addToParsingTable(parsingTable, "Body_Sequence_Tail", "eps", body_Sequence_Tail_eps);
 
-		// Body Sequence
-		LLParser.addToParsingTable(parsingTable,nonTerminals.get("Body_Sequence_Tail"), terminals.get("int"), body_Sequence_Tail);
-		LLParser.addToParsingTable(parsingTable,nonTerminals.get("Body_Sequence_Tail"), terminals.get("if"), body_Sequence_Tail);
-		LLParser.addToParsingTable(parsingTable,nonTerminals.get("Body_Sequence_Tail"), terminals.get("else"), body_Sequence_Tail);
-		LLParser.addToParsingTable(parsingTable,nonTerminals.get("Body_Sequence_Tail"), terminals.get("print_line"), body_Sequence_Tail);
-		LLParser.addToParsingTable(parsingTable,nonTerminals.get("Body_Sequence_Tail"), terminals.get("identifier"), body_Sequence_Tail);
-		LLParser.addToParsingTable(parsingTable,nonTerminals.get("Body_Sequence_Tail"), terminals.get("eps"), body_Sequence_Tail_eps);
+        // Body
+        addToParsingTable(parsingTable, "Body", "int", body_int);
+        addToParsingTable(parsingTable, "Body", "if", body_if);
+        addToParsingTable(parsingTable, "Body", "else", body_else);
+		addToParsingTable(parsingTable, "Body", "else_if", body_else_if);
+        addToParsingTable(parsingTable, "Body", "print_line", body_print);
+        addToParsingTable(parsingTable, "Body", "identifier", body_dec);
 
-		//Body
-		LLParser.addToParsingTable(parsingTable,nonTerminals.get("Body"), terminals.get("int"), body_int);
-		LLParser.addToParsingTable(parsingTable,nonTerminals.get("Body"), terminals.get("if"), body_if);
-		LLParser.addToParsingTable(parsingTable,nonTerminals.get("Body"), terminals.get("else"), body_else);
-		LLParser.addToParsingTable(parsingTable,nonTerminals.get("Body"), terminals.get("print_line"), body_print);
-		LLParser.addToParsingTable(parsingTable,nonTerminals.get("Body"), terminals.get("identifier"), body_dec);
+        // Line Terminator
+        addToParsingTable(parsingTable, "Line_Terminator", "statement_terminator", line_Terminator);
+        addToParsingTable(parsingTable, "Line_Terminator", "punctuation_comma", line_Terminator_comma);
 
-		//line terminator
+        // Int Statement
+        addToParsingTable(parsingTable, "Int_Statement", "int", int_Statement);
 
-		LLParser.addToParsingTable(parsingTable,nonTerminals.get("Line_Terminator"), terminals.get("statement_terminator"), line_Terminator);
-		LLParser.addToParsingTable(parsingTable,nonTerminals.get("Line_Terminator"), terminals.get("punctuation_comma"), line_Terminator_comma);
+        // Declaration Statement
+        addToParsingTable(parsingTable, "Declaration_Statement", "identifier", declaration_Statement);
 
-		//Int Statement
+		// Declaration End
+		addToParsingTable(parsingTable, "Declaration_End", "assignment_operator", declaration_End_equal);
+		addToParsingTable(parsingTable, "Declaration_End", "punctuation_comma", declaration_End_line_term);
+		addToParsingTable(parsingTable, "Declaration_End", "statement_terminator", declaration_End_line_term);
+        // Declaration Sequence
+        addToParsingTable(parsingTable, "Declaration_Sequence", "identifier", declaration_Sequence);
 
-		LLParser.addToParsingTable(parsingTable,nonTerminals.get("Int_Statement"), terminals.get("int"), int_Statement);
+        // Declaration Tail
+        addToParsingTable(parsingTable, "Declaration_Tail", "int", declaration_Tail_eps);
+        addToParsingTable(parsingTable, "Declaration_Tail", "if", declaration_Tail_eps);
+		addToParsingTable(parsingTable, "Declaration_Tail", "else_if", declaration_Tail_eps);
+        addToParsingTable(parsingTable, "Declaration_Tail", "else", declaration_Tail_eps);
+        addToParsingTable(parsingTable, "Declaration_Tail", "print_line", declaration_Tail_eps);
+        addToParsingTable(parsingTable, "Declaration_Tail", "identifier", declaration_Tail);
+        addToParsingTable(parsingTable, "Declaration_Tail", "end", declaration_Tail_eps);
 
-		// Declaration Statement
+        // If Statement
+        addToParsingTable(parsingTable, "If_Statement", "if", if_Statement);
 
-		LLParser.addToParsingTable(parsingTable,nonTerminals.get("Declaration_Statement"), terminals.get("identifier"), declaration_Statement);
+        // If Conditional
+        addToParsingTable(parsingTable, "If_Conditional", "left_parenthesis_operator", if_Conditional);
 
-		//Declaration Sequence
-		LLParser.addToParsingTable(parsingTable,nonTerminals.get("Declaration_Sequence"), terminals.get("identifier"), declaration_Sequence);
+        // If Argument
+        addToParsingTable(parsingTable, "If_Argument", "identifier", if_Argument_id);
+        addToParsingTable(parsingTable, "If_Argument", "number_literal", if_Argument_number);
 
-		//Declaration Tail
-		LLParser.addToParsingTable(parsingTable,nonTerminals.get("Declaration_Tail"), terminals.get("int"), declaration_Tail_eps);
-		LLParser.addToParsingTable(parsingTable,nonTerminals.get("Declaration_Tail"), terminals.get("if"), declaration_Tail_eps);
-		LLParser.addToParsingTable(parsingTable,nonTerminals.get("Declaration_Tail"), terminals.get("else"), declaration_Tail_eps);
-		LLParser.addToParsingTable(parsingTable,nonTerminals.get("Declaration_Tail"), terminals.get("print_line"), declaration_Tail_eps);
-		LLParser.addToParsingTable(parsingTable,nonTerminals.get("Declaration_Tail"), terminals.get("identifier"), declaration_Tail);
-		LLParser.addToParsingTable(parsingTable,nonTerminals.get("Declaration_Tail"), terminals.get("end"), declaration_Tail_eps);
+        // Conditional Operator
+        addToParsingTable(parsingTable, "Conditional_Operator", "less_than_operator", conditional_Operator_less);
+        addToParsingTable(parsingTable, "Conditional_Operator", "greater_than_operator", conditional_Operator_great);
 
-		//if statement
-		LLParser.addToParsingTable(parsingTable,nonTerminals.get("If_Statement"), terminals.get("if"), if_Statement );
+        // Else Statement
+        addToParsingTable(parsingTable, "Else_Statement", "else", else_Statement);
 
-		//if conditional
-		LLParser.addToParsingTable(parsingTable,nonTerminals.get("If_Conditional"), terminals.get("left_parenthesis_operator"), if_Conditional );
+		// Else if Statement
+		addToParsingTable(parsingTable, "Else_If_Statement", "else_if", else_If_Statement);
+        // Print Statement
+        addToParsingTable(parsingTable, "Print_Statement", "print_line", print_Statement);
 
-		//if Argument
-		LLParser.addToParsingTable(parsingTable,nonTerminals.get("If_Argument"), terminals.get("identifier"), if_Argument_id );
-		LLParser.addToParsingTable(parsingTable,nonTerminals.get("If_Argument"), terminals.get("number_literal"), if_Argument_number);
+        // Expression
+        addToParsingTable(parsingTable, "Expression", "identifier", expression);
+        addToParsingTable(parsingTable, "Expression", "number_literal", expression);
 
-		//Conditional Operator
+        // Primary Expression
+        addToParsingTable(parsingTable, "Primary_Expression", "identifier", primary_Expression_id);
+        addToParsingTable(parsingTable, "Primary_Expression", "number_literal", primary_Expression_number);
 
-		LLParser.addToParsingTable(parsingTable,nonTerminals.get("Conditional_Operator"), terminals.get("less_than_operator"), conditional_Operator_less);
-		LLParser.addToParsingTable(parsingTable,nonTerminals.get("Conditional_Operator"), terminals.get("greater_than_operator"), conditional_Operator_great);
+        // Expression Tail
+        addToParsingTable(parsingTable, "Expression_Tail", "punctuation_comma", expression_Tail_eps);
+        addToParsingTable(parsingTable, "Expression_Tail", "statement_terminator", expression_Tail_eps);
+        addToParsingTable(parsingTable, "Expression_Tail", "multiplication_operator", expression_Tail_mult);
 
-		//else than
-		LLParser.addToParsingTable(parsingTable,nonTerminals.get("Else_Statement"), terminals.get("else"), else_Statement);
+		parse(parsingTable,stack,tokenList);
 
-		//print statement
+	}
+    public static void addToParsingTable(Map<String, Map<String, Production>> parsingTable, String nonTerminal, String terminal, Production production) {
+        parsingTable.computeIfAbsent(nonTerminal, k -> new HashMap<>()).put(terminal, production);
+    }
 
-		LLParser.addToParsingTable(parsingTable,nonTerminals.get("Print_Statement"), terminals.get("print_line"), print_Statement);
+	public static void parse(Map<String, Map<String, Production>> parsingTable, Stack<Symbol> stack, List<TokenTerminal> tokenList) {
+		int round = 1;
+		while(round < 2) {
+			int current_index = 0;
+			ArrayList<Terminal> terminalsList = new ArrayList<>();
+			if(round == 1) {
+				System.out.println(stack);
+			}
+			for(int i = 0; i < tokenList.size(); i++) {
+				Terminal term = new Terminal( tokenList.get(i).getTerminal());
+				terminalsList.add(term);
+			}
+			if( round == 0 ) {
+				System.out.println("[GENERATE-stack] " + stack);
+			}
+			while(!Objects.equals(stack.peek().getName(), "$") && !Objects.equals(terminalsList.get(current_index).getName(), "$")) {
+				Symbol top = stack.peek();
+				Terminal currentToken = terminalsList.get(current_index);
+				if(current_index == 30) {
+					System.out.println(stack);
+					System.out.println(terminalsList.get(current_index).getName());
+				}
+				if(top instanceof Terminal) {
+					if(Objects.equals(top.getName(), "eps")) {
+						stack.pop();
+						if(round == 0) {
+							System.out.println("[MATCH] - " + tokenList.get(current_index).getTerminal() + " - " + tokenList.get(current_index).getToken());
+						} else if( round == 1) {
+							System.out.println(stack);
+						}
+					} else {
+						match(stack,top,currentToken);
+						if(round == 0) {
+							System.out.println("[MATCH] - " + tokenList.get(current_index).getTerminal() + " - " + tokenList.get(current_index).getToken());
+						} else if( round == 1) {
+							System.out.println(stack);
+						}
+						current_index++;
+						System.out.println("Index = " + current_index);
+						if(current_index == 30) {
+							System.out.print("here");
+						}
+					}
+				} else if (top instanceof NonTerminal) {
+					if(round == 0) {
+						System.out.println("[GENERATE-stack] " + stack);
+					}
+					Map<String,Production> parsingEntry = parsingTable.get(top.getName());
+					Production currentProduction = parsingEntry.get(currentToken.getName());
+					stack.pop();
+					for(int i = currentProduction.rightHand.size() - 1; i >= 0; i--) {
+						stack.push(currentProduction.rightHand.get(i));
+						if(round == 1) {
+							System.out.println(stack);
+						}
+					}
+				}
+			}
+			if(Objects.equals(stack.peek().getName(), "$") && Objects.equals(terminalsList.get(current_index).getName(), "$")) {
 
-		//Expression
+			} else {
 
-		LLParser.addToParsingTable(parsingTable,nonTerminals.get("Expression"), terminals.get("identifier"), expression);
-		LLParser.addToParsingTable(parsingTable,nonTerminals.get("Expression"), terminals.get("number_literal"), expression);
+			}
+			round++;
+		}
 
-		//Primary Expression
-
-		LLParser.addToParsingTable(parsingTable,nonTerminals.get("Primary_Expression"), terminals.get("identifer"), primary_Expression_id);
-		LLParser.addToParsingTable(parsingTable,nonTerminals.get("Primary_Expression"), terminals.get("number_literal"), primary_Expression_number);
-
-		//Expression Tail
-		LLParser.addToParsingTable(parsingTable,nonTerminals.get("Expression_Tail"), terminals.get("punctuation_comma"), expression_Tail_eps);
-		LLParser.addToParsingTable(parsingTable,nonTerminals.get("Expression_Tail"), terminals.get("statement_terminator"), expression_Tail_eps);
-		LLParser.addToParsingTable(parsingTable,nonTerminals.get("Expression_Tail"), terminals.get("multiplication_operator"), expression_Tail_mult);
 
 
 	}
-	public static void addToParsingTable(Map<NonTerminal, Map<Terminal, Production>> parsingTable, NonTerminal nt, Terminal t, Production p) {
-            parsingTable.computeIfAbsent(nt, k -> new HashMap<>()).put(t, p);
+	private static void match(Stack<Symbol> stack, Symbol top, Terminal currentToken) {
+        if (top.getName().equals(currentToken.getName())) {
+            stack.pop();
+        } else {
+            //error("Terminal mismatch: " + top.getName() + " != " + currentToken.getName());
+            throw new RuntimeException("Parsing error");
         }
+    }
+	private static void error(Stack<Symbol> stack, Symbol top, Terminal currentToken) {
 
+	}
+
+	private void printStack(Stack<Symbol> stack) {
+
+	}
 }
