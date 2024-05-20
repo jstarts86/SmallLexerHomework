@@ -49,14 +49,17 @@ public class LLParser {
 		Production declaration_Tail_eps = new Production((NonTerminal) s.get("Declaration_Sequence"), List.of(s.get("eps")));
 		Production if_Statement = new Production((NonTerminal) s.get("If_Statement"), List.of(s.get("if"), s.get("If_Conditional") ,s.get("begin"), s.get("Body_Sequence"), s.get("end")));
 
-		Production if_Conditional = new Production((NonTerminal) s.get("If_Conditional"), List.of(s.get("left_parenthesis"), s.get("If_Argument") ,s.get("Conditional_Operator"), s.get("If_Argument"),s.get("right_parenthesis")));
+		Production if_Conditional = new Production((NonTerminal) s.get("If_Conditional"), List.of(s.get("left_parenthesis_operator"), s.get("If_Argument") ,s.get("Conditional_Operator"), s.get(
+				"If_Argument"),
+				s.get("right_parenthesis_operator")));
 
 		Production if_Argument_id = new Production((NonTerminal) s.get("If_Argument"), List.of(s.get("identifier")));
 		Production if_Argument_number = new Production((NonTerminal) s.get("If_Argument"), List.of(s.get("number_literal")));
 		Production conditional_Operator_less = new Production((NonTerminal) s.get("Conditional_Operator"), List.of(s.get("less_than_operator")));
 		Production conditional_Operator_great = new Production((NonTerminal) s.get("Conditional_Operator"), List.of(s.get("greater_than_operator")));
 		Production else_Statement = new Production((NonTerminal) s.get("Else_Statement"), List.of(s.get("else"), s.get("begin") ,s.get("Body_Sequence"), s.get("end")));
-		Production print_Statement = new Production((NonTerminal) s.get("Print_Statement"), List.of(s.get("print_line"), s.get("left_parenthesis") ,s.get("string_literal"), s.get("right_paranthesis"),s.get("Line_Terminator")));
+		Production print_Statement = new Production((NonTerminal) s.get("Print_Statement"), List.of(s.get("print_line"), s.get("left_parenthesis_operator") ,s.get("string_literal"), s.get(
+				"right_parenthesis_operator"),s.get("Line_Terminator")));
 
 		Production expression = new Production((NonTerminal) s.get("Expression"), List.of(s.get("Primary_Expression"),s.get("Expression_Tail")));
 
@@ -119,7 +122,7 @@ public class LLParser {
 		LLParser.addToParsingTable(parsingTable,nonTerminals.get("If_Statement"), terminals.get("if"), if_Statement );
 
 		//if conditional
-		LLParser.addToParsingTable(parsingTable,nonTerminals.get("If_Conditional"), terminals.get("left_parenthesis"), if_Conditional );
+		LLParser.addToParsingTable(parsingTable,nonTerminals.get("If_Conditional"), terminals.get("left_parenthesis_operator"), if_Conditional );
 
 		//if Argument
 		LLParser.addToParsingTable(parsingTable,nonTerminals.get("If_Argument"), terminals.get("identifier"), if_Argument_id );
@@ -147,10 +150,12 @@ public class LLParser {
 		LLParser.addToParsingTable(parsingTable,nonTerminals.get("Primary_Expression"), terminals.get("identifer"), primary_Expression_id);
 		LLParser.addToParsingTable(parsingTable,nonTerminals.get("Primary_Expression"), terminals.get("number_literal"), primary_Expression_number);
 
-
+		//Expression Tail
 		LLParser.addToParsingTable(parsingTable,nonTerminals.get("Expression_Tail"), terminals.get("punctuation_comma"), expression_Tail_eps);
 		LLParser.addToParsingTable(parsingTable,nonTerminals.get("Expression_Tail"), terminals.get("statement_terminator"), expression_Tail_eps);
 		LLParser.addToParsingTable(parsingTable,nonTerminals.get("Expression_Tail"), terminals.get("multiplication_operator"), expression_Tail_mult);
+
+
 	}
 	public static void addToParsingTable(Map<NonTerminal, Map<Terminal, Production>> parsingTable, NonTerminal nt, Terminal t, Production p) {
             parsingTable.computeIfAbsent(nt, k -> new HashMap<>()).put(t, p);
