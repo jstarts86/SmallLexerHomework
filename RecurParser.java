@@ -180,7 +180,11 @@ public class RecurParser {
 	public void print_line_statement() {
 		this.match("print_line");
 		this.match("left_parenthesis_operator");
-		this.match("string_literal");
+		if(tokenList.get(currentIndex).equals("string_literal")) {
+			this.match("string_literal");
+		} else if(tokenList.get(currentIndex).equals("identifier")) {
+			this.match("identifier");
+		}
 		this.match("right_parenthesis_operator");
 		this.line_terminator();
 	}
@@ -208,6 +212,7 @@ public class RecurParser {
 		SmallLexer lexer = new SmallLexer();
 		ArrayList<String> tokenList = SmallLexer.lexIntoTokenList(args[0]);
 		RecurParser parser = new RecurParser(tokenList);
+		System.out.print(tokenList);
 		parser.program_statement();
 
 		System.out.println(" ");
