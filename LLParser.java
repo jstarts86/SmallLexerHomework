@@ -13,8 +13,9 @@ public class LLParser {
 
 	public static void main(String[] args) throws IOException {
 		SmallLexer lexer = new SmallLexer();
-		ArrayList<TokenTerminal> tokenList = lexer.lexIntoTokenList("test1.txt");
-		//System.out.println(tokenList);
+//		ArrayList<TokenTerminal> tokenList = lexer.lexIntoTokenList("test3error.txt");
+		ArrayList<TokenTerminal> tokenList = lexer.lexIntoTokenList(args[1]);
+		System.out.println(tokenList);
 //		for(TokenTerminal tok: tokenList) {
 //			System.out.print(tok.getTerminal() + " and ");
 //			System.out.print(tok.getToken() + ", ");
@@ -94,6 +95,7 @@ public class LLParser {
 		addToParsingTable(parsingTable, "Body_Sequence", "else_if", body_Sequence);
         addToParsingTable(parsingTable, "Body_Sequence", "print_line", body_Sequence);
         addToParsingTable(parsingTable, "Body_Sequence", "identifier", body_Sequence);
+		addToParsingTable(parsingTable, "Body_Sequence", "end", new Production((NonTerminal) s.get("Body_Sequence"), List.of(s.get("eps"))));
 
         // Body Sequence Tail
         addToParsingTable(parsingTable, "Body_Sequence_Tail", "int", body_Sequence_Tail);
@@ -182,7 +184,7 @@ public class LLParser {
     }
 
 	public static void parse(Map<String, Map<String, Production>> parsingTable, Stack<Symbol> stack, List<TokenTerminal> tokenList) {
-		int round = 1;
+		int round = 0;
 		while(round < 2) {
 			int current_index = 0;
 			ArrayList<Terminal> terminalsList = new ArrayList<>();
@@ -239,12 +241,16 @@ public class LLParser {
 					}
 				}
 			}
-			if(Objects.equals(stack.peek().getName(), "$") && Objects.equals(terminalsList.get(current_index).getName(), "$")) {
-
-			} else {
-
-			}
 			round++;
+			if(Objects.equals(stack.peek().getName(), "$") && Objects.equals(terminalsList.get(current_index).getName(), "$")) {
+				System.out.println("Parsing successful!");
+				return;
+			} else {// Parsing error
+				System.err.println("Parsing error!");
+                System.out.println("Stack: " + stack);
+                System.out.println("Current token: " + terminalsList.get(current_index).getName());
+				return;
+			}
 		}
 
 
@@ -254,7 +260,6 @@ public class LLParser {
         if (top.getName().equals(currentToken.getName())) {
             stack.pop();
         } else {
-            //error("Terminal mismatch: " + top.getName() + " != " + currentToken.getName());
             throw new RuntimeException("Parsing error");
         }
     }
