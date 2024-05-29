@@ -13,8 +13,8 @@ public class LLParser {
 
 	public static void main(String[] args) throws IOException {
 		SmallLexer lexer = new SmallLexer();
-//		ArrayList<TokenTerminal> tokenList = lexer.lexIntoTokenList("test3error.txt");
-		ArrayList<TokenTerminal> tokenList = lexer.lexIntoTokenList(args[1]);
+		ArrayList<TokenTerminal> tokenList = lexer.lexIntoTokenList("input.txt");
+//		ArrayList<TokenTerminal> tokenList = lexer.lexIntoTokenList(args[1]);
 		System.out.println(tokenList);
 //		for(TokenTerminal tok: tokenList) {
 //			System.out.print(tok.getTerminal() + " and ");
@@ -176,7 +176,7 @@ public class LLParser {
         addToParsingTable(parsingTable, "Expression_Tail", "statement_terminator", expression_Tail_eps);
         addToParsingTable(parsingTable, "Expression_Tail", "multiplication_operator", expression_Tail_mult);
 
-		parse(parsingTable,stack,tokenList);
+//		parse(parsingTable,stack,tokenList);
 
 	}
     public static void addToParsingTable(Map<String, Map<String, Production>> parsingTable, String nonTerminal, String terminal, Production production) {
