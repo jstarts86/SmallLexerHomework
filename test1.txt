@@ -1,9 +1,9 @@
-program Exercise 
+program Test1 
 	begin  -- comment1
 	   int  Time.10.24 = 2206, Hour.In.Day = 0, $Minute.In.Hour ;
     	   if (Time.10.24 < 10) 
 		begin
-      		print_line("Good morning.");
+      		print_line("Good morning."); --comment2
 		 Hour.In.Day = 24;
     		end 
 	   else_if (Time.10.24 < 20) 
