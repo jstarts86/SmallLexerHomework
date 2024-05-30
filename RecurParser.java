@@ -1,24 +1,23 @@
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Objects;
+import java.util.*;
 
 public class RecurParser {
-	private ArrayList<String> tokenList = new ArrayList<>();
+	private ArrayList<TokenTerminal> tokenList = new ArrayList<>();
 	private int currentIndex = 0;
 	private int lookAheadIndex = 1;
 	private Boolean isError = false;
 	private int begin_count;
 	private int end_count;
-	public RecurParser(ArrayList<String> tokenList) {
+	private Map<String, Integer> symbolTable = new HashMap<>();
+	public RecurParser(ArrayList<TokenTerminal> tokenList) {
 		this.tokenList = tokenList;
 	}
 
-	public ArrayList<String> getTokenList() {
+	public ArrayList<TokenTerminal> getTokenList() {
 		return tokenList;
 	}
 
-	public void setTokenList(ArrayList<String> tokenList) {
+	public void setTokenList(ArrayList<TokenTerminal> tokenList) {
 		this.tokenList = tokenList;
 	}
 
@@ -46,11 +45,11 @@ public class RecurParser {
 		isError = error;
 	}
 
-	public void match(String token) {
-		if (currentIndex < tokenList.size() && Objects.equals(this.getTokenList().get(this.getCurrentIndex()), token)) {
-			if(Objects.equals(token, "begin")) {
+	public void match(TokenTerminal currentTerminal) {
+		if (currentIndex < tokenList.size() && Objects.equals(this.getTokenList().get(this.getCurrentIndex()).terminal, currentTerminal.terminal)) {
+			if(Objects.equals(currentTerminal.terminal, "begin")) {
 				begin_count++;
-			} if(Objects.equals(token, "end")) {
+			} if(Objects.equals(currentTerminal.terminal, "end")) {
 				end_count++;
 			}
 			this.setCurrentIndex(this.getCurrentIndex() + 1);
@@ -61,11 +60,11 @@ public class RecurParser {
 	}
 
 	public void program_statement(){
-		this.match("program");
-		this.match("identifier");
-		this.match("begin");
+		this.match(new TokenTerminal("program"));
+		this.match(new TokenTerminal("identifier"));
+		this.match(new TokenTerminal("begin"));
 		this.body_sequence();
-		this.match("end");
+		this.match(new TokenTerminal("end"));
 	}
 	public void body_sequence() {
 		this.body();
@@ -73,44 +72,47 @@ public class RecurParser {
 	}
 
 	public void body() {
-		if(Objects.equals(this.getTokenList().get(currentIndex), "int")) {
+		if(Objects.equals(this.getTokenList().get(currentIndex).terminal, "int")) {
 			this.int_statement();
 		}
-		else if(Objects.equals(this.getTokenList().get(currentIndex), "if")) {
+		else if(Objects.equals(this.getTokenList().get(currentIndex).terminal, "if")) {
 			this.if_statement();
 		}
-		else if(Objects.equals(this.getTokenList().get(currentIndex), "else")) {
+		else if(Objects.equals(this.getTokenList().get(currentIndex).terminal, "else")) {
 			this.else_statement();
 		}
-		else if(Objects.equals(this.getTokenList().get(currentIndex), "else_if")) {
+		else if(Objects.equals(this.getTokenList().get(currentIndex).terminal, "else_if")) {
 			this.else_if_statement();
 		}
-		else if(Objects.equals(this.getTokenList().get(currentIndex), "print_line")) {
+		else if(Objects.equals(this.getTokenList().get(currentIndex).terminal, "print_line")) {
 			this.print_line_statement();
 		}
-		else if(Objects.equals(this.getTokenList().get(currentIndex), "identifier")) {
+		else if(Objects.equals(this.getTokenList().get(currentIndex).terminal, "identifier")) {
 			if(!Objects.equals(tokenList.get(currentIndex - 1), "int")) {
 				declaration_statement();
 			}
 		}
 	}
 	public void declaration_statement() {
-			this.match("identifier");
-			if(Objects.equals(tokenList.get(currentIndex), "statement_terminator") | Objects.equals(tokenList.get(currentIndex), "punctuation_comma")) {
-				this.line_terminator();
-			} else {
-				this.match("assignment_operator");
-				this.expression();
-				this.line_terminator();
-			}
+		String identifier = tokenList.get(currentIndex).token;
+		this.match(new TokenTerminal("identifier"));
+		if(Objects.equals(tokenList.get(currentIndex).terminal, "statement_terminator") | Objects.equals(tokenList.get(currentIndex).terminal, "punctuation_comma")) {
+			symbolTable.put(identifier, 0);
+			this.line_terminator();
+		} else {
+			this.match(new TokenTerminal("assignment_operator"));
+			int value = this.expression();
+			symbolTable.put(identifier, value);
+			this.line_terminator();
+		}
 	}
 	public void declaration_statement_sequence() {
 		this.declaration_statement();
 		this.declaration_statement_tail();
 	}
 	public void declaration_statement_tail() {
-		if (Objects.equals(tokenList.get(currentIndex), "punctuation_comma")) {
-			this.match("punctuation_comma");
+		if (Objects.equals(tokenList.get(currentIndex).terminal, "punctuation_comma")) {
+			this.match(new TokenTerminal("punctuation_comma"));
 			this.declaration_statement_sequence();
 		}
 	}
@@ -120,99 +122,116 @@ public class RecurParser {
 			body_sequence();
 		}
 	}
-	private boolean startsWithBodyElement(String token) {
-		return Arrays.asList("int", "if", "else", "else_if", "print_line", "identifier").contains(token);
+	private boolean startsWithBodyElement(TokenTerminal terminal) {
+		return Arrays.asList("int", "if", "else", "else_if", "print_line", "identifier").contains(terminal.terminal);
 	}
 
 	public void int_statement() {
-		this.match("int");
+		this.match(new TokenTerminal("int"));
 		this.declaration_statement_sequence();
 	}
 	public void line_terminator() {
-		if(Objects.equals(this.tokenList.get(currentIndex), "statement_terminator")) {
-			this.match("statement_terminator");
+		if(Objects.equals(this.tokenList.get(currentIndex).terminal, "statement_terminator")) {
+			this.match(new TokenTerminal("statement_terminator"));
 		}else {
-			this.match("punctuation_comma");
+			this.match(new TokenTerminal("punctuation_comma"));
 		}
 	}
 
 	public void if_statement() {
-		this.match("if");
+		this.match(new TokenTerminal("if"));
 		this.if_conditional();
-		this.match("begin");
+		this.match(new TokenTerminal("begin"));
 		this.body_sequence();
-		this.match("end");
+		this.match(new TokenTerminal("end"));
 	}
 	public void else_if_statement() {
-		this.match("else_if");
+		this.match(new TokenTerminal("else_if"));
 		this.if_conditional();
-		this.match("begin");
+		this.match(new TokenTerminal("begin"));
 		this.body_sequence();
-		this.match("end");
+		this.match(new TokenTerminal("end"));
 	}
 	public void if_conditional() {
-		this.match("left_parenthesis_operator");
+		this.match(new TokenTerminal("left_parenthesis_operator"));
 		this.if_argument();
 		this.conditional_operator();
 		this.if_argument();
-		this.match("right_parenthesis_operator");
+		this.match(new TokenTerminal("right_parenthesis_operator"));
 	}
 	public void if_argument() {
-		if(Objects.equals(this.tokenList.get(currentIndex), "number_literal")) {
-			this.match("number_literal");
+		if(Objects.equals(this.tokenList.get(currentIndex).terminal, "number_literal")) {
+			this.match(new TokenTerminal("number_literal"));
 		} else {
-			this.match("identifier");
+			this.match(new TokenTerminal("identifier"));
 		}
 	}
 	public void conditional_operator() {
-		if(Objects.equals(this.tokenList.get(currentIndex), "less_than_operator")) {
-			this.match("less_than_operator");
+		if(Objects.equals(this.tokenList.get(currentIndex).terminal, "less_than_operator")) {
+			this.match(new TokenTerminal("less_than_operator"));
 		} else {
-			this.match("greater_than_operator");
+			this.match(new TokenTerminal("greater_than_operator"));
 		}
 	}
 	public void else_statement() {
-		this.match("else");
-		this.match("begin");
+		this.match(new TokenTerminal("else"));
+		this.match(new TokenTerminal("begin"));
 		this.body_sequence();
-		this.match("end");
+		this.match(new TokenTerminal("end"));
 	}
 	public void print_line_statement() {
-		this.match("print_line");
-		this.match("left_parenthesis_operator");
-		if(tokenList.get(currentIndex).equals("string_literal")) {
-			this.match("string_literal");
-		} else if(tokenList.get(currentIndex).equals("identifier")) {
-			this.match("identifier");
+		this.match(new TokenTerminal("print_line"));
+		this.match(new TokenTerminal("left_parenthesis_operator"));
+		if(tokenList.get(currentIndex).terminal.equals("string_literal")) {
+			String str = tokenList.get(currentIndex).token;
+			str = str.substring(1,str.length()-1);
+			System.out.println(str);
+			this.match(new TokenTerminal("string_literal"));
+
+		} else if(tokenList.get(currentIndex).terminal.equals("identifier")) {
+			System.out.println(symbolTable.get(tokenList.get(currentIndex).token));
+			this.match(new TokenTerminal("identifier"));
 		}
-		this.match("right_parenthesis_operator");
+		this.match(new TokenTerminal("right_parenthesis_operator"));
 		this.line_terminator();
 	}
-	public void expression() {
-		primary_expression();
-		expression_tail();
+	public int expression() {
+		int value = primary_expression();
+		value = expression_tail(value);
+		return value;
 	}
 
-	public void primary_expression() {
-		if (tokenList.get(currentIndex).equals("number_literal")) {
-			match("number_literal");
-		} else if (tokenList.get(currentIndex).equals("identifier")) {
-			match("identifier");
+	public int primary_expression() {
+		if (tokenList.get(currentIndex).terminal.equals("number_literal")) {
+			int value = Integer.parseInt(tokenList.get(currentIndex).token);
+			match(new TokenTerminal("number_literal"));
+			return value;
+		} else if (tokenList.get(currentIndex).terminal.equals("identifier")) {
+			String id = tokenList.get(currentIndex).token;
+			match(new TokenTerminal("identifier"));
+			return symbolTable.get(id);
 		}
+		return 0;
 	}
 
-	public void expression_tail() {
-		if (currentIndex < tokenList.size() && tokenList.get(currentIndex).equals("multiplication_operator")) {
-			match("multiplication_operator");
-			expression();
+	public int expression_tail(int left_value) {
+		if (currentIndex < tokenList.size() && tokenList.get(currentIndex).terminal.equals("multiplication_operator")) {
+			match(new TokenTerminal("multiplication_operator"));
+			int right_value = expression();
+			return left_value * right_value;
 		}
+		return left_value;
 	}
 
 	public static void main(String[] args) throws IOException {
 		SmallLexer lexer = new SmallLexer();
-		ArrayList<String> tokenList = SmallLexer.lexIntoTokenList(args[0]);
+		ArrayList<TokenTerminal> tokenList = SmallLexer.lexIntoTokenList(args[0]);
 		RecurParser parser = new RecurParser(tokenList);
-		System.out.print(tokenList);
+		int index = 0;
+		for(TokenTerminal currentToken: tokenList) {
+			System.out.print(index+ ":" + currentToken.token +  " "+ currentToken.terminal + "\n");
+			index++;
+		}
 		parser.program_statement();
 
 		System.out.println(" ");
