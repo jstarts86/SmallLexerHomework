@@ -1,7 +1,9 @@
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.PrintStream;
 import java.util.*;
 
-public class RecurParser {
+public class syntrans {
 	private ArrayList<TokenTerminal> tokenList = new ArrayList<>();
 	private int currentIndex = 0;
 	private int lookAheadIndex = 1;
@@ -9,7 +11,7 @@ public class RecurParser {
 	private int begin_count;
 	private int end_count;
 	private Map<String, Integer> symbolTable = new HashMap<>();
-	public RecurParser(ArrayList<TokenTerminal> tokenList) {
+	public syntrans(ArrayList<TokenTerminal> tokenList) {
 		this.tokenList = tokenList;
 	}
 
@@ -224,19 +226,32 @@ public class RecurParser {
 	}
 
 	public static void main(String[] args) throws IOException {
+        PrintStream originalOut = System.out;
+        PrintStream originalErr = System.err;
+
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        PrintStream ps = new PrintStream(baos);
+
+        System.setOut(ps);
+        System.setErr(ps);
+
+
+
 		SmallLexer lexer = new SmallLexer();
 		ArrayList<TokenTerminal> tokenList = SmallLexer.lexIntoTokenList(args[0]);
-		RecurParser parser = new RecurParser(tokenList);
+		syntrans parser = new syntrans(tokenList);
 		int index = 0;
-		for(TokenTerminal currentToken: tokenList) {
-			System.out.print(index+ ":" + currentToken.token +  " "+ currentToken.terminal + "\n");
-			index++;
-		}
+//		for(TokenTerminal currentToken: tokenList) {
+//			System.out.print(index+ ":" + currentToken.token +  " "+ currentToken.terminal + "\n");
+//			index++;
+//		}
+		System.setOut(originalOut);
+        System.setErr(originalErr);
 		parser.program_statement();
 
-		System.out.println(" ");
+//		System.out.println(" ");
 
-		if(!parser.getError()) {
+		/*if(!parser.getError()) {
 			System.out.println("Parsing OK");
 		} else {
 			System.out.println("Parsing failed");
@@ -245,6 +260,6 @@ public class RecurParser {
 			System.out.println("end missing");
 		} else if ( parser.end_count > parser.begin_count) {
 			System.out.println("begin missing");
-		}
+		}*/
 	}
 }
