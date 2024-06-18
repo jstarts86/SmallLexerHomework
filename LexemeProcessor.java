@@ -142,6 +142,10 @@ public class LexemeProcessor {
 							tokenList.add(new TokenTerminal(processed_word.getConsumed(), "int"));
 							System.out.println(processed_word.getConsumed() + "                " + "int");
 							break;
+						case "integer":
+							tokenList.add(new TokenTerminal(processed_word.getConsumed(), "int"));
+							System.out.println(processed_word.getConsumed() + "                " + "int");
+							break;
 						case "print_line":
 							tokenList.add(new TokenTerminal(processed_word.getConsumed(), "print_line"));
 							System.out.println(processed_word.getConsumed() + "                " + "print_line");
@@ -163,7 +167,7 @@ public class LexemeProcessor {
 							System.out.println(processed_word.getConsumed() + "                " + "if");
 							break;
 						case "else_if":
-							tokenList.add(new TokenTerminal(processed_word.getConsumed(), "else_if"));
+							tokenList.add(new TokenTerminal(processed_word.getConsumed(), "if"));
 							System.out.println(processed_word.getConsumed() + "                " + "else_if");
 							break;
 						case "else":

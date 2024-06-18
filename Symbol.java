@@ -7,7 +7,8 @@ public class Symbol {
 			"else", "print_line", "identifier", "statement_terminator",
 			"punctuation_comma", "display_line", "for", "while",
 			"left_parenthesis_operator", "else_if",
-			"assignment_operator", "right_parenthesis_operator", "number_literal", "multiplication_operator", "begin", "end", "less_than_operator", "greater_than_operator", "string_literal",
+			"assignment_operator", "right_parenthesis_operator","integer" , "number_literal", "multiplication_operator", "begin", "end", "less_than_operator", "greater_than_operator",
+			"string_literal",
 			"if_argument","eps", "$");
 	public static List<String> nonTerminalList = List.of("Program_Statement", "Body_Sequence", "Body_Sequence_Tail", "Body", "Line_Terminator", "Int_Statement",
 			"Declaration_Statement", "Declaration_Sequence",
