@@ -1,7 +1,7 @@
-program Test2error 
+program Test2 
 begin 
 	 int i.Value.$ = 0, $Minute.In.Hour = 1; -- comment first line
- 	 while4 (i.Value.$ < 5) 
+ 	 while (i.Value.$ ? 5) 
  	 begin
 		print_line(i.Value.$ ); -- comment2
      	  	i.Value.$ = i.Value.$ + 1;

@@ -22,4 +22,8 @@ public class TokenTerminal {
 	public void setTerminal(String terminal) {
 		this.terminal = terminal;
 	}
+	@Override
+	public String toString() {
+		return getTerminal();
+	}
 }

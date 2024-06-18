@@ -1,4 +1,4 @@
-program Test1error 
+program Test1 
 	begin  -- comment1
 	   int  Time.10.24 = 2206, Hour.In.Day = 0, $Minute.In.Hour ;
     	   if (Time.10.24 < 10) 
@@ -6,7 +6,7 @@ program Test1error
       		print_line("Good morning."); --comment2
 		 Hour.In.Day = 24;
     		end 
-	   else_if (Time.10.24 < 20) 
+	       (Time.10.24 < 20) 
 		begin
 		 $Minute.In.Hour = Hour.In.Day * 60;
       		 print_line("Good day.");
@@ -15,4 +15,4 @@ program Test1error
 		begin
       		 print_line("Good evening.");
     		end
- 	
+ 	end

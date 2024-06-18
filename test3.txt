@@ -4,7 +4,7 @@ program Test3
 		 Minute_In_Hour=3;
 	  for (int i=0; i < 10; i++)  -- comment, for statement
 	     begin
-	         display(¡°test input");
+	         display("test input");
 	     end
 	   while ( temp < 10) -- comment, while statement
                begin

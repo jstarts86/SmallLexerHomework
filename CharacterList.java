@@ -15,7 +15,7 @@ public class CharacterList {
         Collections.unmodifiableList(Arrays.asList('=', '>', '<' ,'+', '-','*' , ')' , '(', ';', '\n'));
 
 		public static final List<String> keyWordList =
-        Collections.unmodifiableList(Arrays.asList("program", "begin", "if", "print_line", "int", "while", "end", "else", "else_if"));
+        Collections.unmodifiableList(Arrays.asList("program", "begin", "if","for","display", "print_line", "int", "while", "end", "else", "else_if"));
 
 		public static final List<Character> blankTokenDelimeterList =
         Collections.unmodifiableList(Arrays.asList(' ' ,'\r' ,'\n' , '\t', '\n'));
