@@ -22,12 +22,17 @@ public class LRParser {
             Action action = lrTable.getAction(currentState, currentToken.getTerminal());
 
             if (action == null) {
-                throw new RuntimeException("Syntax error at token: " + currentToken.getToken() + " in state: " + currentState);
+                System.out.println("Syntax error at token: " + currentToken.getToken() + " in state: " + currentState);
+                if (lrTable.hasShift(currentState)) {
+                    System.out.println("Error Type: Shifting Error");
+                } else if (lrTable.hasReduce(currentState)) {
+                    System.out.println("Error Type: Reducing Error");
+                }
+                return;
             }
 
-            System.out.println("State Stack: " + stateStack);
-            System.out.println("Symbol Stack: " + symbolStack);
-            System.out.println("Current State: S " + currentState);
+            System.out.println("State Stack and Symbols: " + interleaveStacks(stateStack, symbolStack));
+            System.out.println("Current State: S" + currentState);
             System.out.println("Current Token: " + currentToken.getTerminal());
             System.out.println("Action: " + action.actionType + " " + (action.state != -1 ? "S" + action.state : action.production));
 
@@ -48,7 +53,21 @@ public class LRParser {
         }
     }
 
-     private void applyReduceAction(Action action, List<Production> productions, Stack<Integer> stateStack, Stack<TokenTerminal> symbolStack, LRTable lrTable) {
+    private String interleaveStacks(Stack<Integer> stateStack, Stack<TokenTerminal> symbolStack) {
+        StringBuilder result = new StringBuilder();
+        for (int i = 0; i < stateStack.size(); i++) {
+            result.append("S").append(stateStack.get(i));
+            if (i < symbolStack.size()) {
+                result.append(" ").append(symbolStack.get(i).getTerminal());
+            }
+            if (i < stateStack.size() - 1) {
+                result.append(" | ");
+            }
+        }
+        return result.toString();
+    }
+
+    private void applyReduceAction(Action action, List<Production> productions, Stack<Integer> stateStack, Stack<TokenTerminal> symbolStack, LRTable lrTable) {
         Production production = productions.get(Integer.parseInt(action.production));
         int rhsLength = (int) production.rightHand.stream().filter(symbol -> !symbol.getName().equals("eps")).count();
 
@@ -71,13 +90,13 @@ public class LRParser {
 
 	public static void main(String[] args) throws IOException {
 		SmallLexer lexer = new SmallLexer();
-		ArrayList<TokenTerminal> tokenList = lexer.lexIntoTokenList("test1.txt");
+		ArrayList<TokenTerminal> tokenList = lexer.lexIntoTokenList("test3error.txt");
+        tokenList.add(new TokenTerminal("$", "$"));
 		List<Production> productions = new ArrayList<Production>();
 	        productions.add(new Production(
             new NonTerminal("Program_Statement'"),
             Arrays.asList(new NonTerminal("Program_Statement"))
         ));
-//        productions.add(new Production(new NonTerminal("Program_Statement'"), Arrays.asList(new NonTerminal("Program_Statement"))));
         productions.add(new Production(
             new NonTerminal("Program_Statement"),
             Arrays.asList(new Terminal("program"), new Terminal("identifier"), new Terminal("begin"), new NonTerminal("Body_Sequence"), new Terminal("end"))
@@ -180,19 +199,19 @@ public class LRParser {
         ));
         productions.add(new Production(
             new NonTerminal("Print_Statement"),
-            Arrays.asList(new Terminal("print_line"), new Terminal("left_parenthesis_operator"), new Terminal("string_literal"), new Terminal("right_parenthesis_operator"), new NonTerminal("Line_Terminator"))
+            Arrays.asList(new Terminal("print_line"), new Terminal("left_parenthesis_operator"), new Terminal("string_literal"), new Terminal("right_parenthesis_operator"), new Terminal("statement_terminator"))
         ));
         productions.add(new Production(
             new NonTerminal("Print_Statement"),
-            Arrays.asList(new Terminal("print_line"), new Terminal("left_parenthesis_operator"), new Terminal("identifier"), new Terminal("right_parenthesis_operator"))
+            Arrays.asList(new Terminal("print_line"), new Terminal("left_parenthesis_operator"), new Terminal("identifier"), new Terminal("right_parenthesis_operator"), new Terminal("statement_terminator"))
         ));
         productions.add(new Production(
             new NonTerminal("Display_Statement"),
-            Arrays.asList(new Terminal("display_line"), new Terminal("left_parenthesis_operator"), new Terminal("string_literal"), new Terminal("right_parenthesis_operator"), new NonTerminal("Line_Terminator"))
+            Arrays.asList(new Terminal("display_line"), new Terminal("left_parenthesis_operator"), new Terminal("string_literal"), new Terminal("right_parenthesis_operator"), new Terminal("statement_terminator"))
         ));
         productions.add(new Production(
             new NonTerminal("Display_Statement"),
-            Arrays.asList(new Terminal("display_line"), new Terminal("left_parenthesis_operator"), new Terminal("identifier"), new Terminal("right_parenthesis_operator"))
+            Arrays.asList(new Terminal("display_line"), new Terminal("left_parenthesis_operator"), new Terminal("identifier"), new Terminal("right_parenthesis_operator"), new Terminal("statement_terminator"))
         ));
         productions.add(new Production(
             new NonTerminal("Expression"),
@@ -208,11 +227,23 @@ public class LRParser {
         ));
         productions.add(new Production(
             new NonTerminal("Expression_Tail"),
-            Arrays.asList(new Terminal("multiplication_operator"), new NonTerminal("Expression"))
+            Arrays.asList(new NonTerminal("Arithmetic_Operator"), new NonTerminal("Expression"))
         ));
         productions.add(new Production(
             new NonTerminal("Expression_Tail"),
             Arrays.asList(new Terminal("eps"))
+        ));
+        productions.add(new Production(
+            new NonTerminal("Arithmetic_Operator"),
+            Arrays.asList(new Terminal("multiplication_operator"))
+        ));
+        productions.add(new Production(
+            new NonTerminal("Arithmetic_Operator"),
+            Arrays.asList(new Terminal("minus_operator"))
+        ));
+        productions.add(new Production(
+            new NonTerminal("Arithmetic_Operator"),
+            Arrays.asList(new Terminal("plus_operator"))
         ));
         productions.add(new Production(
             new NonTerminal("Conditional_Operator"),
@@ -232,18 +263,26 @@ public class LRParser {
         ));
         productions.add(new Production(
             new NonTerminal("For_Statement"),
-            Arrays.asList(new Terminal("for"), new Terminal("left_parenthesis_operator"), new Terminal("int"), new Terminal("identifier"), new Terminal("assignment_operator"), new NonTerminal("Expression"), new Terminal("statement_terminator"), new NonTerminal("If_Argument"), new NonTerminal("Conditional_Operator"), new NonTerminal("If_Argument"), new Terminal("right_parenthesis_operator"), new Terminal("begin"), new NonTerminal("Body_Sequence"), new Terminal("end"))
+            Arrays.asList(new Terminal("for"), new Terminal("left_parenthesis_operator"), new Terminal("int"), new Terminal("identifier"), new Terminal("assignment_operator"), new NonTerminal(
+                    "Expression"), new Terminal("statement_terminator"), new NonTerminal("If_Argument"), new NonTerminal("Conditional_Operator"), new NonTerminal("If_Argument"),
+                    new Terminal("statement_terminator"), new Terminal("identifier"), new Terminal("plus_operator"),new Terminal("plus_operator"), new Terminal("right_parenthesis_operator"),
+                    new Terminal("begin"), new NonTerminal("Body_Sequence"), new Terminal("end"))
         ));
         productions.add(new Production(
             new NonTerminal("While_Statement"),
             Arrays.asList(new Terminal("while"), new Terminal("left_parenthesis_operator"), new NonTerminal("If_Argument"), new NonTerminal("Conditional_Operator"), new NonTerminal("If_Argument"), new Terminal("right_parenthesis_operator"), new Terminal("begin"), new NonTerminal("Body_Sequence"), new Terminal("end"))
         ));
 
-
-		LRTable lrTable = new LRTable();
+        LRTable lrTable = new LRTable();
         lrTable.addAction(1, "$", new Action("ACCEPT", -1, null));
+        lrTable.addAction(23, "$", new Action("REDUCE", -1, "1"));
+
+
+
+
         lrTable.addAction(0, "program", new Action("SHIFT", 2, null));
         lrTable.addGoto(0, "Program_Statement", 1);
+        // Skipping invalid integer conversion at state 1, header $, value acc
         lrTable.addAction(2, "identifier", new Action("SHIFT", 3, null));
         lrTable.addAction(3, "begin", new Action("SHIFT", 4, null));
         lrTable.addAction(4, "identifier", new Action("SHIFT", 22, null));
@@ -362,6 +401,7 @@ public class LRParser {
         lrTable.addAction(22, "statement_terminator", new Action("REDUCE", -1, "20"));
         lrTable.addAction(22, "punctuation_comma", new Action("REDUCE", -1, "20"));
         lrTable.addAction(22, "assignment_operator", new Action("SHIFT", 38, null));
+        lrTable.addGoto(23, "$", -1);
         lrTable.addAction(24, "end", new Action("REDUCE", -1, "2"));
         lrTable.addAction(25, "end", new Action("REDUCE", -1, "3"));
         lrTable.addAction(26, "begin", new Action("SHIFT", 39, null));
@@ -482,25 +522,32 @@ public class LRParser {
         lrTable.addAction(52, "punctuation_comma", new Action("REDUCE", -1, "19"));
         lrTable.addAction(53, "statement_terminator", new Action("REDUCE", -1, "34"));
         lrTable.addAction(53, "punctuation_comma", new Action("REDUCE", -1, "34"));
-        lrTable.addAction(53, "multiplication_operator", new Action("SHIFT", 71, null));
+        lrTable.addAction(53, "multiplication_operator", new Action("SHIFT", 72, null));
+        lrTable.addAction(53, "minus_operator", new Action("SHIFT", 73, null));
+        lrTable.addAction(53, "plus_operator", new Action("SHIFT", 74, null));
         lrTable.addGoto(53, "Expression_Tail", 70);
+        lrTable.addGoto(53, "Arithmetic_Operator", 71);
         lrTable.addAction(54, "statement_terminator", new Action("REDUCE", -1, "31"));
         lrTable.addAction(54, "punctuation_comma", new Action("REDUCE", -1, "31"));
         lrTable.addAction(54, "multiplication_operator", new Action("REDUCE", -1, "31"));
+        lrTable.addAction(54, "minus_operator", new Action("REDUCE", -1, "31"));
+        lrTable.addAction(54, "plus_operator", new Action("REDUCE", -1, "31"));
         lrTable.addAction(55, "statement_terminator", new Action("REDUCE", -1, "32"));
         lrTable.addAction(55, "punctuation_comma", new Action("REDUCE", -1, "32"));
         lrTable.addAction(55, "multiplication_operator", new Action("REDUCE", -1, "32"));
-        lrTable.addAction(56, "end", new Action("SHIFT", 72, null));
-        lrTable.addAction(57, "identifier", new Action("SHIFT", 75, null));
-        lrTable.addAction(57, "number_literal", new Action("SHIFT", 74, null));
-        lrTable.addGoto(57, "If_Argument", 73);
-        lrTable.addAction(58, "identifier", new Action("REDUCE", -1, "35"));
-        lrTable.addAction(58, "number_literal", new Action("REDUCE", -1, "35"));
-        lrTable.addAction(59, "identifier", new Action("REDUCE", -1, "36"));
-        lrTable.addAction(59, "number_literal", new Action("REDUCE", -1, "36"));
-        lrTable.addAction(60, "identifier", new Action("REDUCE", -1, "37"));
-        lrTable.addAction(60, "number_literal", new Action("REDUCE", -1, "37"));
-        lrTable.addAction(61, "assignment_operator", new Action("SHIFT", 76, null));
+        lrTable.addAction(55, "minus_operator", new Action("REDUCE", -1, "32"));
+        lrTable.addAction(55, "plus_operator", new Action("REDUCE", -1, "32"));
+        lrTable.addAction(56, "end", new Action("SHIFT", 75, null));
+        lrTable.addAction(57, "identifier", new Action("SHIFT", 78, null));
+        lrTable.addAction(57, "number_literal", new Action("SHIFT", 77, null));
+        lrTable.addGoto(57, "If_Argument", 76);
+        lrTable.addAction(58, "identifier", new Action("REDUCE", -1, "38"));
+        lrTable.addAction(58, "number_literal", new Action("REDUCE", -1, "38"));
+        lrTable.addAction(59, "identifier", new Action("REDUCE", -1, "39"));
+        lrTable.addAction(59, "number_literal", new Action("REDUCE", -1, "39"));
+        lrTable.addAction(60, "identifier", new Action("REDUCE", -1, "40"));
+        lrTable.addAction(60, "number_literal", new Action("REDUCE", -1, "40"));
+        lrTable.addAction(61, "assignment_operator", new Action("SHIFT", 79, null));
         lrTable.addAction(62, "identifier", new Action("REDUCE", -1, "25"));
         lrTable.addAction(62, "end", new Action("REDUCE", -1, "25"));
         lrTable.addAction(62, "int", new Action("REDUCE", -1, "25"));
@@ -510,218 +557,185 @@ public class LRParser {
         lrTable.addAction(62, "display_line", new Action("REDUCE", -1, "25"));
         lrTable.addAction(62, "for", new Action("REDUCE", -1, "25"));
         lrTable.addAction(62, "while", new Action("REDUCE", -1, "25"));
-        lrTable.addAction(63, "statement_terminator", new Action("SHIFT", 78, null));
-        lrTable.addAction(63, "punctuation_comma", new Action("SHIFT", 79, null));
-        lrTable.addGoto(63, "Line_Terminator", 77);
-        lrTable.addAction(64, "identifier", new Action("REDUCE", -1, "27"));
-        lrTable.addAction(64, "end", new Action("REDUCE", -1, "27"));
-        lrTable.addAction(64, "int", new Action("REDUCE", -1, "27"));
-        lrTable.addAction(64, "if", new Action("REDUCE", -1, "27"));
-        lrTable.addAction(64, "else", new Action("REDUCE", -1, "27"));
-        lrTable.addAction(64, "print_line", new Action("REDUCE", -1, "27"));
-        lrTable.addAction(64, "display_line", new Action("REDUCE", -1, "27"));
-        lrTable.addAction(64, "for", new Action("REDUCE", -1, "27"));
-        lrTable.addAction(64, "while", new Action("REDUCE", -1, "27"));
-        lrTable.addAction(66, "identifier", new Action("REDUCE", -1, "29"));
-        lrTable.addAction(66, "end", new Action("REDUCE", -1, "29"));
-        lrTable.addAction(66, "int", new Action("REDUCE", -1, "29"));
-        lrTable.addAction(66, "if", new Action("REDUCE", -1, "29"));
-        lrTable.addAction(66, "else", new Action("REDUCE", -1, "29"));
-        lrTable.addAction(66, "print_line", new Action("REDUCE", -1, "29"));
-        lrTable.addAction(66, "display_line", new Action("REDUCE", -1, "29"));
-        lrTable.addAction(66, "for", new Action("REDUCE", -1, "29"));
-        lrTable.addAction(66, "while", new Action("REDUCE", -1, "29"));
-        lrTable.addAction(67, "assignment_operator", new Action("SHIFT", 81, null));
-        lrTable.addAction(68, "identifier", new Action("SHIFT", 75, null));
-        lrTable.addAction(68, "number_literal", new Action("SHIFT", 74, null));
-        lrTable.addGoto(68, "If_Argument", 82);
+        lrTable.addAction(63, "statement_terminator", new Action("SHIFT", 80, null));
+        lrTable.addAction(64, "statement_terminator", new Action("SHIFT", 81, null));
+        lrTable.addAction(66, "statement_terminator", new Action("SHIFT", 83, null));
+        lrTable.addAction(67, "assignment_operator", new Action("SHIFT", 84, null));
+        lrTable.addAction(68, "identifier", new Action("SHIFT", 78, null));
+        lrTable.addAction(68, "number_literal", new Action("SHIFT", 77, null));
+        lrTable.addGoto(68, "If_Argument", 85);
         lrTable.addAction(69, "statement_terminator", new Action("REDUCE", -1, "18"));
         lrTable.addAction(69, "punctuation_comma", new Action("REDUCE", -1, "18"));
         lrTable.addAction(70, "statement_terminator", new Action("REDUCE", -1, "30"));
         lrTable.addAction(70, "punctuation_comma", new Action("REDUCE", -1, "30"));
         lrTable.addAction(71, "identifier", new Action("SHIFT", 55, null));
         lrTable.addAction(71, "number_literal", new Action("SHIFT", 54, null));
-        lrTable.addGoto(71, "Expression", 83);
+        lrTable.addGoto(71, "Expression", 86);
         lrTable.addGoto(71, "Primary_Expression", 53);
-        lrTable.addAction(72, "identifier", new Action("REDUCE", -1, "21"));
-        lrTable.addAction(72, "end", new Action("REDUCE", -1, "21"));
-        lrTable.addAction(72, "int", new Action("REDUCE", -1, "21"));
-        lrTable.addAction(72, "if", new Action("REDUCE", -1, "21"));
-        lrTable.addAction(72, "else", new Action("REDUCE", -1, "21"));
-        lrTable.addAction(72, "print_line", new Action("REDUCE", -1, "21"));
-        lrTable.addAction(72, "display_line", new Action("REDUCE", -1, "21"));
-        lrTable.addAction(72, "for", new Action("REDUCE", -1, "21"));
-        lrTable.addAction(72, "while", new Action("REDUCE", -1, "21"));
-        lrTable.addAction(73, "right_parenthesis_operator", new Action("SHIFT", 84, null));
-        lrTable.addAction(74, "right_parenthesis_operator", new Action("REDUCE", -1, "23"));
-        lrTable.addAction(75, "right_parenthesis_operator", new Action("REDUCE", -1, "24"));
-        lrTable.addAction(76, "identifier", new Action("REDUCE", -1, "38"));
-        lrTable.addAction(76, "number_literal", new Action("REDUCE", -1, "38"));
-        lrTable.addAction(77, "identifier", new Action("REDUCE", -1, "26"));
-        lrTable.addAction(77, "end", new Action("REDUCE", -1, "26"));
-        lrTable.addAction(77, "int", new Action("REDUCE", -1, "26"));
-        lrTable.addAction(77, "if", new Action("REDUCE", -1, "26"));
-        lrTable.addAction(77, "else", new Action("REDUCE", -1, "26"));
-        lrTable.addAction(77, "print_line", new Action("REDUCE", -1, "26"));
-        lrTable.addAction(77, "display_line", new Action("REDUCE", -1, "26"));
-        lrTable.addAction(77, "for", new Action("REDUCE", -1, "26"));
-        lrTable.addAction(77, "while", new Action("REDUCE", -1, "26"));
-        lrTable.addAction(78, "identifier", new Action("REDUCE", -1, "12"));
-        lrTable.addAction(78, "end", new Action("REDUCE", -1, "12"));
-        lrTable.addAction(78, "int", new Action("REDUCE", -1, "12"));
-        lrTable.addAction(78, "if", new Action("REDUCE", -1, "12"));
-        lrTable.addAction(78, "else", new Action("REDUCE", -1, "12"));
-        lrTable.addAction(78, "print_line", new Action("REDUCE", -1, "12"));
-        lrTable.addAction(78, "display_line", new Action("REDUCE", -1, "12"));
-        lrTable.addAction(78, "for", new Action("REDUCE", -1, "12"));
-        lrTable.addAction(78, "while", new Action("REDUCE", -1, "12"));
-        lrTable.addAction(79, "identifier", new Action("REDUCE", -1, "13"));
-        lrTable.addAction(79, "end", new Action("REDUCE", -1, "13"));
-        lrTable.addAction(79, "int", new Action("REDUCE", -1, "13"));
-        lrTable.addAction(79, "if", new Action("REDUCE", -1, "13"));
-        lrTable.addAction(79, "else", new Action("REDUCE", -1, "13"));
-        lrTable.addAction(79, "print_line", new Action("REDUCE", -1, "13"));
-        lrTable.addAction(79, "display_line", new Action("REDUCE", -1, "13"));
-        lrTable.addAction(79, "for", new Action("REDUCE", -1, "13"));
-        lrTable.addAction(79, "while", new Action("REDUCE", -1, "13"));
-        lrTable.addAction(80, "right_parenthesis_operator", new Action("SHIFT", 85, null));
-        lrTable.addAction(81, "identifier", new Action("SHIFT", 89, null));
-        lrTable.addAction(81, "number_literal", new Action("SHIFT", 88, null));
-        lrTable.addGoto(81, "Expression", 86);
-        lrTable.addGoto(81, "Primary_Expression", 87);
-        lrTable.addAction(82, "right_parenthesis_operator", new Action("SHIFT", 90, null));
-        lrTable.addAction(83, "statement_terminator", new Action("REDUCE", -1, "33"));
-        lrTable.addAction(83, "punctuation_comma", new Action("REDUCE", -1, "33"));
-        lrTable.addAction(84, "begin", new Action("REDUCE", -1, "22"));
-        lrTable.addAction(85, "statement_terminator", new Action("SHIFT", 78, null));
-        lrTable.addAction(85, "punctuation_comma", new Action("SHIFT", 79, null));
-        lrTable.addGoto(85, "Line_Terminator", 91);
-        lrTable.addAction(86, "statement_terminator", new Action("SHIFT", 92, null));
-        lrTable.addAction(87, "statement_terminator", new Action("REDUCE", -1, "34"));
-        lrTable.addAction(87, "multiplication_operator", new Action("SHIFT", 94, null));
-        lrTable.addGoto(87, "Expression_Tail", 93);
-        lrTable.addAction(88, "statement_terminator", new Action("REDUCE", -1, "31"));
-        lrTable.addAction(88, "multiplication_operator", new Action("REDUCE", -1, "31"));
-        lrTable.addAction(89, "statement_terminator", new Action("REDUCE", -1, "32"));
-        lrTable.addAction(89, "multiplication_operator", new Action("REDUCE", -1, "32"));
-        lrTable.addAction(90, "begin", new Action("SHIFT", 95, null));
-        lrTable.addAction(91, "identifier", new Action("REDUCE", -1, "28"));
-        lrTable.addAction(91, "end", new Action("REDUCE", -1, "28"));
-        lrTable.addAction(91, "int", new Action("REDUCE", -1, "28"));
-        lrTable.addAction(91, "if", new Action("REDUCE", -1, "28"));
-        lrTable.addAction(91, "else", new Action("REDUCE", -1, "28"));
-        lrTable.addAction(91, "print_line", new Action("REDUCE", -1, "28"));
-        lrTable.addAction(91, "display_line", new Action("REDUCE", -1, "28"));
-        lrTable.addAction(91, "for", new Action("REDUCE", -1, "28"));
-        lrTable.addAction(91, "while", new Action("REDUCE", -1, "28"));
-        lrTable.addAction(92, "identifier", new Action("SHIFT", 98, null));
-        lrTable.addAction(92, "number_literal", new Action("SHIFT", 97, null));
-        lrTable.addGoto(92, "If_Argument", 96);
-        lrTable.addAction(93, "statement_terminator", new Action("REDUCE", -1, "30"));
-        lrTable.addAction(94, "identifier", new Action("SHIFT", 89, null));
-        lrTable.addAction(94, "number_literal", new Action("SHIFT", 88, null));
-        lrTable.addGoto(94, "Expression", 99);
-        lrTable.addGoto(94, "Primary_Expression", 87);
-        lrTable.addAction(95, "identifier", new Action("SHIFT", 22, null));
-        lrTable.addAction(95, "int", new Action("SHIFT", 21, null));
-        lrTable.addAction(95, "if", new Action("SHIFT", 14, null));
-        lrTable.addAction(95, "else", new Action("SHIFT", 15, null));
-        lrTable.addAction(95, "print_line", new Action("SHIFT", 16, null));
-        lrTable.addAction(95, "display_line", new Action("SHIFT", 18, null));
-        lrTable.addAction(95, "for", new Action("SHIFT", 19, null));
-        lrTable.addAction(95, "while", new Action("SHIFT", 20, null));
-        lrTable.addGoto(95, "Body_Sequence", 100);
-        lrTable.addGoto(95, "Body", 6);
-        lrTable.addGoto(95, "Declaration_Sequence", 10);
-        lrTable.addGoto(95, "Declaration_Statement", 17);
-        lrTable.addGoto(95, "If_Statement", 7);
-        lrTable.addGoto(95, "Else_Statement", 8);
-        lrTable.addGoto(95, "Print_Statement", 9);
-        lrTable.addGoto(95, "Display_Statement", 11);
-        lrTable.addGoto(95, "For_Statement", 12);
-        lrTable.addGoto(95, "While_Statement", 13);
-        lrTable.addAction(99, "statement_terminator", new Action("REDUCE", -1, "33"));
-        lrTable.addAction(100, "end", new Action("SHIFT", 102, null));
-        lrTable.addAction(102, "identifier", new Action("REDUCE", -1, "40"));
-        lrTable.addAction(102, "end", new Action("REDUCE", -1, "40"));
-        lrTable.addAction(102, "int", new Action("REDUCE", -1, "40"));
-        lrTable.addAction(102, "if", new Action("REDUCE", -1, "40"));
-        lrTable.addAction(102, "else", new Action("REDUCE", -1, "40"));
-        lrTable.addAction(102, "print_line", new Action("REDUCE", -1, "40"));
-        lrTable.addAction(102, "display_line", new Action("REDUCE", -1, "40"));
-        lrTable.addAction(102, "for", new Action("REDUCE", -1, "40"));
-        lrTable.addAction(102, "while", new Action("REDUCE", -1, "40"));
-        lrTable.addAction(103, "identifier", new Action("SHIFT", 75, null));
-        lrTable.addAction(103, "number_literal", new Action("SHIFT", 74, null));
-        lrTable.addGoto(103, "If_Argument", 104);
-        lrTable.addAction(104, "right_parenthesis_operator", new Action("SHIFT", 105, null));
-        lrTable.addAction(105, "begin", new Action("SHIFT", 106, null));
-        lrTable.addAction(106, "identifier", new Action("SHIFT", 22, null));
-        lrTable.addAction(106, "int", new Action("SHIFT", 21, null));
-        lrTable.addAction(106, "if", new Action("SHIFT", 14, null));
-        lrTable.addAction(106, "else", new Action("SHIFT", 15, null));
-        lrTable.addAction(106, "print_line", new Action("SHIFT", 16, null));
-        lrTable.addAction(106, "display_line", new Action("SHIFT", 18, null));
-        lrTable.addAction(106, "for", new Action("SHIFT", 19, null));
-        lrTable.addAction(106, "while", new Action("SHIFT", 20, null));
-        lrTable.addGoto(106, "Body_Sequence", 107);
-        lrTable.addGoto(106, "Body", 6);
-        lrTable.addGoto(106, "Declaration_Sequence", 10);
-        lrTable.addGoto(106, "Declaration_Statement", 17);
-        lrTable.addGoto(106, "If_Statement", 7);
-        lrTable.addGoto(106, "Else_Statement", 8);
-        lrTable.addGoto(106, "Print_Statement", 9);
-        lrTable.addGoto(106, "Display_Statement", 11);
-        lrTable.addGoto(106, "For_Statement", 12);
-        lrTable.addGoto(106, "While_Statement", 13);
-        lrTable.addAction(107, "end", new Action("SHIFT", 108, null));
-        lrTable.addAction(108, "identifier", new Action("REDUCE", -1, "39"));
-        lrTable.addAction(108, "end", new Action("REDUCE", -1, "39"));
-        lrTable.addAction(108, "int", new Action("REDUCE", -1, "39"));
-        lrTable.addAction(108, "if", new Action("REDUCE", -1, "39"));
-        lrTable.addAction(108, "else", new Action("REDUCE", -1, "39"));
-        lrTable.addAction(108, "print_line", new Action("REDUCE", -1, "39"));
-        lrTable.addAction(108, "display_line", new Action("REDUCE", -1, "39"));
-        lrTable.addAction(108, "for", new Action("REDUCE", -1, "39"));
-        lrTable.addAction(108, "while", new Action("REDUCE", -1, "39"));
-        lrTable.addAction(109, "end", new Action("SHIFT", 111, null));
-        lrTable.addAction(110, "identifier", new Action("REDUCE", -1, "39"));
-        lrTable.addAction(110, "end", new Action("REDUCE", -1, "39"));
-        lrTable.addAction(110, "int", new Action("REDUCE", -1, "39"));
-        lrTable.addAction(110, "if", new Action("REDUCE", -1, "39"));
-        lrTable.addAction(110, "else", new Action("REDUCE", -1, "39"));
-        lrTable.addAction(110, "print_line", new Action("REDUCE", -1, "39"));
-        lrTable.addAction(110, "display_line", new Action("REDUCE", -1, "39"));
-        lrTable.addAction(110, "equivalence_operator", new Action("REDUCE", -1, "39"));
-        lrTable.addAction(110, "for", new Action("REDUCE", -1, "39"));
-        lrTable.addAction(111, "identifier", new Action("REDUCE", -1, "38"));
-        lrTable.addAction(111, "end", new Action("REDUCE", -1, "38"));
-        lrTable.addAction(111, "int", new Action("REDUCE", -1, "38"));
-        lrTable.addAction(111, "if", new Action("REDUCE", -1, "38"));
-        lrTable.addAction(111, "else", new Action("REDUCE", -1, "38"));
-        lrTable.addAction(111, "print_line", new Action("REDUCE", -1, "38"));
-        lrTable.addAction(111, "display_line", new Action("REDUCE", -1, "38"));
-        lrTable.addAction(111, "equivalence_operator", new Action("REDUCE", -1, "38"));
-        lrTable.addAction(111, "for", new Action("REDUCE", -1, "38"));
-        lrTable.addAction(112, "end", new Action("SHIFT", 114, null));
-        lrTable.addAction(113, "identifier", new Action("REDUCE", -1, "39"));
-        lrTable.addAction(113, "end", new Action("REDUCE", -1, "39"));
-        lrTable.addAction(113, "int", new Action("REDUCE", -1, "39"));
-        lrTable.addAction(113, "if", new Action("REDUCE", -1, "39"));
-        lrTable.addAction(113, "else", new Action("REDUCE", -1, "39"));
-        lrTable.addAction(113, "print_line", new Action("REDUCE", -1, "39"));
-        lrTable.addAction(113, "display_line", new Action("REDUCE", -1, "39"));
-        lrTable.addAction(113, "greater_than_operator", new Action("REDUCE", -1, "39"));
-        lrTable.addAction(113, "equivalence_operator", new Action("REDUCE", -1, "39"));
-        lrTable.addAction(114, "identifier", new Action("REDUCE", -1, "38"));
-        lrTable.addAction(114, "end", new Action("REDUCE", -1, "38"));
-        lrTable.addAction(114, "int", new Action("REDUCE", -1, "38"));
-        lrTable.addAction(114, "if", new Action("REDUCE", -1, "38"));
-        lrTable.addAction(114, "else", new Action("REDUCE", -1, "38"));
-        lrTable.addAction(114, "print_line", new Action("REDUCE", -1, "38"));
-        lrTable.addAction(114, "display_line", new Action("REDUCE", -1, "38"));
-        lrTable.addAction(114, "greater_than_operator", new Action("REDUCE", -1, "38"));
-        lrTable.addAction(114, "equivalence_operator", new Action("REDUCE", -1, "38"));
+        lrTable.addAction(72, "identifier", new Action("REDUCE", -1, "35"));
+        lrTable.addAction(72, "number_literal", new Action("REDUCE", -1, "35"));
+        lrTable.addAction(73, "identifier", new Action("REDUCE", -1, "36"));
+        lrTable.addAction(73, "number_literal", new Action("REDUCE", -1, "36"));
+        lrTable.addAction(74, "identifier", new Action("REDUCE", -1, "37"));
+        lrTable.addAction(74, "number_literal", new Action("REDUCE", -1, "37"));
+        lrTable.addAction(75, "identifier", new Action("REDUCE", -1, "21"));
+        lrTable.addAction(75, "end", new Action("REDUCE", -1, "21"));
+        lrTable.addAction(75, "int", new Action("REDUCE", -1, "21"));
+        lrTable.addAction(75, "if", new Action("REDUCE", -1, "21"));
+        lrTable.addAction(75, "else", new Action("REDUCE", -1, "21"));
+        lrTable.addAction(75, "print_line", new Action("REDUCE", -1, "21"));
+        lrTable.addAction(75, "display_line", new Action("REDUCE", -1, "21"));
+        lrTable.addAction(75, "for", new Action("REDUCE", -1, "21"));
+        lrTable.addAction(75, "while", new Action("REDUCE", -1, "21"));
+        lrTable.addAction(76, "right_parenthesis_operator", new Action("SHIFT", 87, null));
+        lrTable.addAction(77, "right_parenthesis_operator", new Action("REDUCE", -1, "23"));
+        lrTable.addAction(78, "right_parenthesis_operator", new Action("REDUCE", -1, "24"));
+        lrTable.addAction(79, "identifier", new Action("REDUCE", -1, "41"));
+        lrTable.addAction(79, "number_literal", new Action("REDUCE", -1, "41"));
+        lrTable.addAction(80, "identifier", new Action("REDUCE", -1, "26"));
+        lrTable.addAction(80, "end", new Action("REDUCE", -1, "26"));
+        lrTable.addAction(80, "int", new Action("REDUCE", -1, "26"));
+        lrTable.addAction(80, "if", new Action("REDUCE", -1, "26"));
+        lrTable.addAction(80, "else", new Action("REDUCE", -1, "26"));
+        lrTable.addAction(80, "print_line", new Action("REDUCE", -1, "26"));
+        lrTable.addAction(80, "display_line", new Action("REDUCE", -1, "26"));
+        lrTable.addAction(80, "for", new Action("REDUCE", -1, "26"));
+        lrTable.addAction(80, "while", new Action("REDUCE", -1, "26"));
+        lrTable.addAction(81, "identifier", new Action("REDUCE", -1, "27"));
+        lrTable.addAction(81, "end", new Action("REDUCE", -1, "27"));
+        lrTable.addAction(81, "int", new Action("REDUCE", -1, "27"));
+        lrTable.addAction(81, "if", new Action("REDUCE", -1, "27"));
+        lrTable.addAction(81, "else", new Action("REDUCE", -1, "27"));
+        lrTable.addAction(81, "print_line", new Action("REDUCE", -1, "27"));
+        lrTable.addAction(81, "display_line", new Action("REDUCE", -1, "27"));
+        lrTable.addAction(81, "for", new Action("REDUCE", -1, "27"));
+        lrTable.addAction(81, "while", new Action("REDUCE", -1, "27"));
+        lrTable.addAction(82, "right_parenthesis_operator", new Action("SHIFT", 88, null));
+        lrTable.addAction(83, "identifier", new Action("REDUCE", -1, "29"));
+        lrTable.addAction(83, "end", new Action("REDUCE", -1, "29"));
+        lrTable.addAction(83, "int", new Action("REDUCE", -1, "29"));
+        lrTable.addAction(83, "if", new Action("REDUCE", -1, "29"));
+        lrTable.addAction(83, "else", new Action("REDUCE", -1, "29"));
+        lrTable.addAction(83, "print_line", new Action("REDUCE", -1, "29"));
+        lrTable.addAction(83, "display_line", new Action("REDUCE", -1, "29"));
+        lrTable.addAction(83, "for", new Action("REDUCE", -1, "29"));
+        lrTable.addAction(83, "while", new Action("REDUCE", -1, "29"));
+        lrTable.addAction(84, "identifier", new Action("SHIFT", 92, null));
+        lrTable.addAction(84, "number_literal", new Action("SHIFT", 91, null));
+        lrTable.addGoto(84, "Expression", 89);
+        lrTable.addGoto(84, "Primary_Expression", 90);
+        lrTable.addAction(85, "right_parenthesis_operator", new Action("SHIFT", 93, null));
+        lrTable.addAction(86, "statement_terminator", new Action("REDUCE", -1, "33"));
+        lrTable.addAction(86, "punctuation_comma", new Action("REDUCE", -1, "33"));
+        lrTable.addAction(87, "begin", new Action("REDUCE", -1, "22"));
+        lrTable.addAction(88, "statement_terminator", new Action("SHIFT", 94, null));
+        lrTable.addAction(89, "statement_terminator", new Action("SHIFT", 95, null));
+        lrTable.addAction(90, "statement_terminator", new Action("REDUCE", -1, "34"));
+        lrTable.addAction(90, "multiplication_operator", new Action("SHIFT", 72, null));
+        lrTable.addAction(90, "minus_operator", new Action("SHIFT", 73, null));
+        lrTable.addAction(90, "plus_operator", new Action("SHIFT", 74, null));
+        lrTable.addGoto(90, "Expression_Tail", 96);
+        lrTable.addGoto(90, "Arithmetic_Operator", 97);
+        lrTable.addAction(91, "statement_terminator", new Action("REDUCE", -1, "31"));
+        lrTable.addAction(91, "multiplication_operator", new Action("REDUCE", -1, "31"));
+        lrTable.addAction(91, "minus_operator", new Action("REDUCE", -1, "31"));
+        lrTable.addAction(91, "plus_operator", new Action("REDUCE", -1, "31"));
+        lrTable.addAction(92, "statement_terminator", new Action("REDUCE", -1, "32"));
+        lrTable.addAction(92, "multiplication_operator", new Action("REDUCE", -1, "32"));
+        lrTable.addAction(92, "minus_operator", new Action("REDUCE", -1, "32"));
+        lrTable.addAction(92, "plus_operator", new Action("REDUCE", -1, "32"));
+        lrTable.addAction(93, "begin", new Action("SHIFT", 98, null));
+        lrTable.addAction(94, "identifier", new Action("REDUCE", -1, "28"));
+        lrTable.addAction(94, "end", new Action("REDUCE", -1, "28"));
+        lrTable.addAction(94, "int", new Action("REDUCE", -1, "28"));
+        lrTable.addAction(94, "if", new Action("REDUCE", -1, "28"));
+        lrTable.addAction(94, "else", new Action("REDUCE", -1, "28"));
+        lrTable.addAction(94, "print_line", new Action("REDUCE", -1, "28"));
+        lrTable.addAction(94, "display_line", new Action("REDUCE", -1, "28"));
+        lrTable.addAction(94, "for", new Action("REDUCE", -1, "28"));
+        lrTable.addAction(94, "while", new Action("REDUCE", -1, "28"));
+        lrTable.addAction(95, "identifier", new Action("SHIFT", 42, null));
+        lrTable.addAction(95, "number_literal", new Action("SHIFT", 41, null));
+        lrTable.addGoto(95, "If_Argument", 99);
+        lrTable.addAction(96, "statement_terminator", new Action("REDUCE", -1, "30"));
+        lrTable.addAction(97, "identifier", new Action("SHIFT", 92, null));
+        lrTable.addAction(97, "number_literal", new Action("SHIFT", 91, null));
+        lrTable.addGoto(97, "Expression", 100);
+        lrTable.addGoto(97, "Primary_Expression", 90);
+        lrTable.addAction(98, "identifier", new Action("SHIFT", 22, null));
+        lrTable.addAction(98, "int", new Action("SHIFT", 21, null));
+        lrTable.addAction(98, "if", new Action("SHIFT", 14, null));
+        lrTable.addAction(98, "else", new Action("SHIFT", 15, null));
+        lrTable.addAction(98, "print_line", new Action("SHIFT", 16, null));
+        lrTable.addAction(98, "display_line", new Action("SHIFT", 18, null));
+        lrTable.addAction(98, "for", new Action("SHIFT", 19, null));
+        lrTable.addAction(98, "while", new Action("SHIFT", 20, null));
+        lrTable.addGoto(98, "Body_Sequence", 101);
+        lrTable.addGoto(98, "Body", 6);
+        lrTable.addGoto(98, "Declaration_Sequence", 10);
+        lrTable.addGoto(98, "Declaration_Statement", 17);
+        lrTable.addGoto(98, "If_Statement", 7);
+        lrTable.addGoto(98, "Else_Statement", 8);
+        lrTable.addGoto(98, "Print_Statement", 9);
+        lrTable.addGoto(98, "Display_Statement", 11);
+        lrTable.addGoto(98, "For_Statement", 12);
+        lrTable.addGoto(98, "While_Statement", 13);
+        lrTable.addAction(99, "assignment_operator", new Action("SHIFT", 61, null));
+        lrTable.addAction(99, "less_than_operator", new Action("SHIFT", 58, null));
+        lrTable.addAction(99, "greater_than_operator", new Action("SHIFT", 59, null));
+        lrTable.addAction(99, "equivalence_operator", new Action("SHIFT", 60, null));
+        lrTable.addGoto(99, "Conditional_Operator", 102);
+        lrTable.addAction(100, "statement_terminator", new Action("REDUCE", -1, "33"));
+        lrTable.addAction(101, "end", new Action("SHIFT", 103, null));
+        lrTable.addAction(102, "identifier", new Action("SHIFT", 106, null));
+        lrTable.addAction(102, "number_literal", new Action("SHIFT", 105, null));
+        lrTable.addGoto(102, "If_Argument", 104);
+        lrTable.addAction(103, "identifier", new Action("REDUCE", -1, "43"));
+        lrTable.addAction(103, "end", new Action("REDUCE", -1, "43"));
+        lrTable.addAction(103, "int", new Action("REDUCE", -1, "43"));
+        lrTable.addAction(103, "if", new Action("REDUCE", -1, "43"));
+        lrTable.addAction(103, "else", new Action("REDUCE", -1, "43"));
+        lrTable.addAction(103, "print_line", new Action("REDUCE", -1, "43"));
+        lrTable.addAction(103, "display_line", new Action("REDUCE", -1, "43"));
+        lrTable.addAction(103, "for", new Action("REDUCE", -1, "43"));
+        lrTable.addAction(103, "while", new Action("REDUCE", -1, "43"));
+        lrTable.addAction(104, "statement_terminator", new Action("SHIFT", 107, null));
+        lrTable.addAction(105, "statement_terminator", new Action("REDUCE", -1, "23"));
+        lrTable.addAction(106, "statement_terminator", new Action("REDUCE", -1, "24"));
+        lrTable.addAction(107, "identifier", new Action("SHIFT", 108, null));
+        lrTable.addAction(108, "plus_operator", new Action("SHIFT", 109, null));
+        lrTable.addAction(109, "plus_operator", new Action("SHIFT", 110, null));
+        lrTable.addAction(110, "right_parenthesis_operator", new Action("SHIFT", 111, null));
+        lrTable.addAction(111, "begin", new Action("SHIFT", 112, null));
+        lrTable.addAction(112, "identifier", new Action("SHIFT", 22, null));
+        lrTable.addAction(112, "int", new Action("SHIFT", 21, null));
+        lrTable.addAction(112, "if", new Action("SHIFT", 14, null));
+        lrTable.addAction(112, "else", new Action("SHIFT", 15, null));
+        lrTable.addAction(112, "print_line", new Action("SHIFT", 16, null));
+        lrTable.addAction(112, "display_line", new Action("SHIFT", 18, null));
+        lrTable.addAction(112, "for", new Action("SHIFT", 19, null));
+        lrTable.addAction(112, "while", new Action("SHIFT", 20, null));
+        lrTable.addGoto(112, "Body_Sequence", 113);
+        lrTable.addGoto(112, "Body", 6);
+        lrTable.addGoto(112, "Declaration_Sequence", 10);
+        lrTable.addGoto(112, "Declaration_Statement", 17);
+        lrTable.addGoto(112, "If_Statement", 7);
+        lrTable.addGoto(112, "Else_Statement", 8);
+        lrTable.addGoto(112, "Print_Statement", 9);
+        lrTable.addGoto(112, "Display_Statement", 11);
+        lrTable.addGoto(112, "For_Statement", 12);
+        lrTable.addGoto(112, "While_Statement", 13);
+        lrTable.addAction(113, "end", new Action("SHIFT", 114, null));
+        lrTable.addAction(114, "identifier", new Action("REDUCE", -1, "42"));
+        lrTable.addAction(114, "end", new Action("REDUCE", -1, "42"));
+        lrTable.addAction(114, "int", new Action("REDUCE", -1, "42"));
+        lrTable.addAction(114, "if", new Action("REDUCE", -1, "42"));
+        lrTable.addAction(114, "else", new Action("REDUCE", -1, "42"));
+        lrTable.addAction(114, "print_line", new Action("REDUCE", -1, "42"));
+        lrTable.addAction(114, "display_line", new Action("REDUCE", -1, "42"));
+        lrTable.addAction(114, "for", new Action("REDUCE", -1, "42"));
+        lrTable.addAction(114, "while", new Action("REDUCE", -1, "42"));
+
 
 
 
