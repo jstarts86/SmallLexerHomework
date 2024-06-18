@@ -5,8 +5,8 @@ import java.util.ArrayList;
 
 public class SmallLexer {
     public static ArrayList<TokenTerminal> lexIntoTokenList(String file) throws IOException {
-        System.out.println("\n");
-        System.out.println("Processing: " + file);
+//        System.out.println("\n");
+//        System.out.println("Processing: " + file);
         String content = Files.readString(Paths.get(file));
         //intialize all Lexemes
         Identifier identifier = new Identifier();
@@ -59,7 +59,7 @@ public class SmallLexer {
                     if (lexeme_check.getError()) {
                         currentInputState = checker.check_lexeme(currentInputState.getNonConsumed(), identifier);
                         if (currentInputState.getConsumed().charAt(0) != '$' || !Character.isAlphabetic(currentInputState.getConsumed().charAt(0))) {
-                            System.out.println(currentInputState.getConsumed() + "             illegal ID starting with wrong character");
+//                            System.out.println(currentInputState.getConsumed() + "             illegal ID starting with wrong character");
                             checker.printTokenDelimeters(currentInputState.getDelimeter());
                         }
                     }
@@ -73,7 +73,7 @@ public class SmallLexer {
                 if (lexeme_check.getError()) {
                     currentInputState = checker.check_lexeme(currentInputState.getNonConsumed(), identifier);
                     if (currentInputState.getConsumed().charAt(0) != '$' || !Character.isAlphabetic(currentInputState.getConsumed().charAt(0))) {
-                        System.out.println(currentInputState.getConsumed() + "             illegal ID starting with wrong character");
+//                        System.out.println(currentInputState.getConsumed() + "             illegal ID starting with wrong character");
                         checker.printTokenDelimeters(currentInputState.getDelimeter());
                     }
                 }

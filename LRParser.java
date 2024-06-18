@@ -31,14 +31,11 @@ public class LRParser {
                 return;
             }
 
-            System.out.println("State Stack and Symbols: " + interleaveStacks(stateStack, symbolStack));
-            System.out.println("Current State: S" + currentState);
-            System.out.println("Current Token: " + currentToken.getTerminal());
-            System.out.println("Action: " + action.actionType + " " + (action.state != -1 ? "S" + action.state : action.production));
+            System.out.println(interleaveStacks(stateStack, symbolStack));
 
             switch (action.actionType) {
                 case "SHIFT":
-                    System.out.println("[S] S" + currentState + " " + currentToken.getTerminal());
+                    System.out.print("[S] ");
                     stateStack.push(action.state);
                     symbolStack.push(currentToken);
                     tokenIndex++;
@@ -56,12 +53,12 @@ public class LRParser {
     private String interleaveStacks(Stack<Integer> stateStack, Stack<TokenTerminal> symbolStack) {
         StringBuilder result = new StringBuilder();
         for (int i = 0; i < stateStack.size(); i++) {
-            result.append("S").append(stateStack.get(i));
+            result.append(stateStack.get(i));
             if (i < symbolStack.size()) {
                 result.append(" ").append(symbolStack.get(i).getTerminal());
             }
             if (i < stateStack.size() - 1) {
-                result.append(" | ");
+                result.append(" ");
             }
         }
         return result.toString();
@@ -85,12 +82,12 @@ public class LRParser {
 
         stateStack.push(nextState);
         symbolStack.push(new TokenTerminal(production.leftHand.getName(), production.leftHand.getName()));
-        System.out.println("[R] " + production.leftHand.getName() + " -> " + production.rightHand);
+        System.out.print("[R] ");
     }
 
 	public static void main(String[] args) throws IOException {
 		SmallLexer lexer = new SmallLexer();
-		ArrayList<TokenTerminal> tokenList = lexer.lexIntoTokenList("test3error.txt");
+		ArrayList<TokenTerminal> tokenList = lexer.lexIntoTokenList(args[0]);
         tokenList.add(new TokenTerminal("$", "$"));
 		List<Production> productions = new ArrayList<Production>();
 	        productions.add(new Production(
@@ -740,14 +737,6 @@ public class LRParser {
 
 
 
-
-
-//		ArrayList<TokenTerminal> tokenList = lexer.lexIntoTokenList(args[1]);
-//		Stack<TokenTerminal> symbolStack = new Stack
-		System.out.println(tokenList);
-		for(TokenTerminal tok: tokenList) {
-			System.out.print(tok.getTerminal() + " ");
-		}
 		LRParser lrParser = new LRParser();
 		lrParser.parse(lrTable,tokenList,productions);
 
